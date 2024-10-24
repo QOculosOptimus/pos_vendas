@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos Vendas</title>
+</head>
+<body>
+    <h1>Pedidos de Vendas</h1>
+    <form action="/fetch" method="POST">
+        <button type="submit">Fetch Sales Orders</button>
+    </form>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Numero</th>
+            <th>Nome</th>
+            <th>Total</th>
+            <th>Data</th>
+            <th>Data Prevista</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order[0] }}</td>
+            <td>{{ order[1] }}</td>
+            <td>{{ order[2] }}</td>
+            <td>{{ order[3] }}</td>
+            <td>{{ order[4] }}</td>
+            <td>{{ order[5] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
