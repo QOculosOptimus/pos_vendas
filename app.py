@@ -1,13 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import requests
-import datetime
+import os
+import random
+import string
+from requests_oauthlib import OAuth2Session
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Replace with a secure key
+load_dotenv()
 
-# SQLite database setup
+# Configuration
 DATABASE = 'pedidos_vendas.db'
+AUTHORIZATION_BASE_URL = 'https://jeanrabelo.github.io/J-lia/criptografia/index_animado_crip_1_automatico.html'
+TOKEN_URL = 'https://developer.bling.com.br/api/bling/oauth/token'
+CLIENT_ID = os.getenv('CLIENT_ID')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+REDIRECT_URI = 'http://localhost:5000/callback'  # Update this with your actual redirect URI
 
+# Initialize the database
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -16,26 +28,49 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Get access token (refresh if needed)
-def get_access_token():
-    token_url = 'https://developer.bling.com.br/api/bling/oauth/token'
-    payload = {
-        'grant_type': 'authorization_code',
-        'code': 'your_code',  # Replace with your code
-        'client_id': 'your_client_id',  # Replace with your client_id
-        'client_secret': 'your_client_secret',  # Replace with your client_secret
-        'redirect_uri': 'https://developer.bling.com.br/oauth/redirect'
-    }
-    headers = {
-        'accept': 'application/json',
-        'content-type': 'application/x-www-form-urlencoded'
-    }
-    response = requests.post(token_url, data=payload, headers=headers)
-    token_data = response.json()
-    return token_data['access_token']
+# Generate a random state string
+def generate_state(length=16):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-# Fetch sales orders from Bling API and store in SQLite
+@app.route('/')
+def index():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM pedidos_vendas')
+    orders = cursor.fetchall()
+    conn.close()
+    return render_template('index.html', orders=orders)
+
+@app.route('/fetch', methods=['POST'])
+def fetch():
+    # Step 1: Redirect user to Bling's authorization page to get the authorization code
+    state = generate_state()
+    bling = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI, state=state)
+    authorization_url, state = bling.authorization_url(AUTHORIZATION_BASE_URL)
+    print(f'autorization_url:\n{authorization_url}\nstate:\n{state}')
+
+    # Save the state in the session to validate later
+    session['oauth_state'] = state
+
+    return redirect(authorization_url)
+
+@app.route('/callback', methods=['GET'])
+def callback():
+    # Step 2: Exchange the authorization code for an access token
+    bling = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI, state=session['oauth_state'])
+    token = bling.fetch_token(TOKEN_URL, client_secret=CLIENT_SECRET, authorization_response=request.url)
+    print(f'token:\n{token}')
+
+    # Save the token in the session for later use
+    session['oauth_token'] = token
+
+    # Fetch sales orders after successful authentication
+    fetch_sales_orders(token['access_token'])
+    
+    return redirect(url_for('index'))
+
 def fetch_sales_orders(token):
+    # Step 3: Fetch sales orders from Bling API and store in SQLite
     orders_url = 'https://developer.bling.com.br/api/bling/pedidos/vendas'
     params = {
         'pagina': 1,
@@ -57,21 +92,6 @@ def fetch_sales_orders(token):
                        (order['numero'], order['contato']['nome'], order['total'], order['data'], order['dataPrevista']))
     conn.commit()
     conn.close()
-
-@app.route('/')
-def index():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM pedidos_vendas')
-    orders = cursor.fetchall()
-    conn.close()
-    return render_template('index.html', orders=orders)
-
-@app.route('/fetch', methods=['POST'])
-def fetch():
-    token = get_access_token()
-    fetch_sales_orders(token)
-    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     init_db()
