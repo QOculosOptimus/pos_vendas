@@ -1,2 +1,3 @@
 venv/
 pedidos_vendas.db
+.env
