@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos Vendas</title>
+    <script>
+        // Function to initiate OAuth2 authorization
+        function fetchSalesOrders() {
+            google.script.run.withSuccessHandler(displayOrders).fetchSalesOrders();
+        }
+
+        // Function to display fetched sales orders
+        function displayOrders(orders) {
+            const table = document.getElementById('ordersTableBody');
+            table.innerHTML = ''; // Clear the existing table
+
+            orders.forEach(order => {
+                const row = table.insertRow();
+                row.insertCell(0).innerText = order.numero;
+                row.insertCell(1).innerText = order.nome;
+                row.insertCell(2).innerText = order.total;
+                row.insertCell(3).innerText = order.data;
+                row.insertCell(4).innerText = order.dataPrevista;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Pedidos de Vendas</h1>
+    <button onclick="fetchSalesOrders()">Fetch Sales Orders</button>
+    <table border="1">
+        <tr>
+            <th>Numero</th>
+            <th>Nome</th>
+            <th>Total</th>
+            <th>Data</th>
+            <th>Data Prevista</th>
+        </tr>
+        <tbody id="ordersTableBody"></tbody>
+    </table>
+</body>
+</html>
+

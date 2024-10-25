@@ -13,7 +13,7 @@ load_dotenv()
 
 # Configuration
 DATABASE = 'pedidos_vendas.db'
-AUTHORIZATION_BASE_URL = 'https://jeanrabelo.github.io/J-lia/criptografia/index_animado_crip_1_automatico.html'
+AUTHORIZATION_BASE_URL = 'https://qoculosoptimus.github.io/J-lia/pos_vendas/frontend/index.html'
 TOKEN_URL = 'https://developer.bling.com.br/api/bling/oauth/token'
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
