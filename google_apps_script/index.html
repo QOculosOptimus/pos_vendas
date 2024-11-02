@@ -5,18 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fetch Sales Orders</title>
     <script>
-        async function fetchSalesOrdersManual() {
-            const isTokenExpired = await google.script.run.checkTokenExpiration();
-
-            if (isTokenExpired) {
-                google.script.run.withSuccessHandler(function(url) {
-                    window.open(url, '_blank');
-                }).getRedirectUrl();
-            } else {
-                google.script.run.withSuccessHandler(function(response) {
-                    document.getElementById("response").textContent = JSON.stringify(response, null, 2);
-                }).fetchSalesOrders();
-            }
+        function fetchSalesOrdersManual() {
+            google.script.run
+                .withSuccessHandler(function(isTokenExpired) {
+                    if (isTokenExpired) {
+                        google.script.run.withSuccessHandler(function(url) {
+                            window.open(url, '_blank');
+                        }).getRedirectUrl();
+                    } else {
+                        google.script.run.withSuccessHandler(function(response) {
+                            document.getElementById("response").textContent = JSON.stringify(response, null, 2);
+                        }).fetchSalesOrders();
+                    }
+                })
+                .checkTokenExpiration();
         }
     </script>
 </head>
