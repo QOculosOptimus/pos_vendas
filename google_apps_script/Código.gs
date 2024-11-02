@@ -2,18 +2,55 @@ const sheetId = "1b2ReDDV_cPomVDR0sPcoFuQEhd8brGBnF7AFblQTIvY";
 const sheetName = "Página1";
 
 function doGet(e) {
-    const path = e.pathInfo || "";
-    
     if (e.parameter.code && e.parameter.state) {
         const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
         sheet.getRange("B1").setValue(e.parameter.code);
         sheet.getRange("B2").setValue(new Date());
         sheet.getRange("B3").setValue(e.parameter.state);
-	sheet.getRange("B4").setValue(new Date());
+        sheet.getRange("B4").setValue(new Date());
+
+        // Exchange the authorization code for a bearer token
+        const tokenData = fetchBearerToken(e.parameter.code);
+        if (tokenData) {
+            sheet.getRange("C5").setValue(tokenData.refresh_token);
+            sheet.getRange("C6").setValue(tokenData.access_token);
+            
+            // Calculate the expiration time and record it in C7
+            const expirationTime = new Date();
+            expirationTime.setSeconds(expirationTime.getSeconds() + tokenData.expires_in);
+            sheet.getRange("C7").setValue(expirationTime);
+        }
     }
     return HtmlService.createHtmlOutputFromFile('index');
 }
 
+function fetchBearerToken(authCode) {
+    const clientId = '7d7db940a604900abdaf3641fe304423fac2d65c';
+    const clientSecret = '39c1816d51a67dfc30a1eb1d8fa7b8341442fdc6c00104c635b37bbb93bb';
+    const redirectUri = 'https://script.google.com/macros/s/AKfycbxnGdqTfhojDWvNS_0igaq6ht8fgnL5G_sBmr8Dwo8/dev';
+    
+    const tokenUrl = 'https://developer.bling.com.br/api/bling/oauth/token';
+    const payload = {
+        method: 'post',
+        payload: {
+            grant_type: 'authorization_code',
+            code: authCode,
+            redirect_uri: redirectUri,
+            client_id: clientId,
+            client_secret: clientSecret,
+        },
+    };
+
+    const response = UrlFetchApp.fetch(tokenUrl, payload);
+    const responseData = JSON.parse(response.getContentText());
+    
+    // Return token data including access token, refresh token, and expires_in
+    return {
+        access_token: responseData.access_token || null,
+        refresh_token: responseData.refresh_token || null,
+        expires_in: responseData.expires_in || null,
+    };
+}
 
 function getRedirectUrl() {
     const clientId = '7d7db940a604900abdaf3641fe304423fac2d65c';
@@ -33,3 +70,4 @@ function generateRandomString(length) {
     }
     return result;
 }
+
