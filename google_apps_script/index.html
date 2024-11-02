@@ -4,6 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fetch Sales Orders</title>
+    <style>
+        /* Basic styling for the table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #4CAF50; /* Changed background color for better contrast */
+            color: white; /* Changed font color for better contrast */
+        }
+        /* Responsive design */
+        @media screen and (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            th {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                margin-bottom: 15px;
+            }
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+            }
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+            }
+        }
+        /* Styling for the collapsible container */
+        .collapsible {
+            background-color: #f0f8ff; /* Lighter background color for collapsible container */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .collapsible-header {
+            background-color: #e2e2e2;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapsible-content {
+            display: none;
+            padding: 10px;
+            overflow-x: auto; /* Ensure content doesn't spill out */
+        }
+        .collapsible.active .collapsible-content {
+            display: block;
+        }
+        .collapsible .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .collapsible.active .toggle-icon {
+            transform: rotate(90deg);
+        }
+    </style>
     <script>
         function fetchSalesOrdersManual() {
             google.script.run
@@ -14,17 +88,139 @@
                         }).getRedirectUrl();
                     } else {
                         google.script.run.withSuccessHandler(function(response) {
-                            document.getElementById("response").textContent = JSON.stringify(response, null, 2);
+                            renderTable(response);
                         }).fetchSalesOrders();
                     }
                 })
                 .checkTokenExpiration();
         }
+
+        function renderTable(data) {
+            const container = document.getElementById("response");
+            container.innerHTML = ""; // Clear previous content
+
+            if (!data || !data.data || data.data.length === 0) {
+                container.textContent = "No sales orders found.";
+                return;
+            }
+
+            // Define table headers based on the keys in the JSON data
+            const headers = [
+                "ID",
+                "Número",
+                "Data",
+                "Data Saída",
+                "Data Prevista",
+                "Total Produtos",
+                "Total",
+                "Situação Valor",
+                "Situação ID",
+                "Número Loja",
+                "Loja ID",
+                "Contato Tipo Pessoa",
+                "Contato Nome",
+                "Contato ID",
+                "Contato Documento"
+            ];
+
+            // Create collapsible container
+            const collapsible = document.createElement("div");
+            collapsible.className = "collapsible";
+
+            // Create collapsible header
+            const header = document.createElement("div");
+            header.className = "collapsible-header";
+            header.textContent = "Sales Orders";
+            
+            // Create toggle icon
+            const toggleIcon = document.createElement("span");
+            toggleIcon.className = "toggle-icon";
+            toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
+            header.appendChild(toggleIcon);
+
+            // Create collapsible content
+            const content = document.createElement("div");
+            content.className = "collapsible-content";
+
+            // Append header and content to collapsible container
+            collapsible.appendChild(header);
+            collapsible.appendChild(content);
+
+            // Append collapsible to container
+            container.appendChild(collapsible);
+
+            // Event listener for collapsing/expanding
+            header.addEventListener("click", function() {
+                collapsible.classList.toggle("active");
+                // Toggle the arrow direction
+                if (collapsible.classList.contains("active")) {
+                    toggleIcon.innerHTML = "&#9660;"; // Down-pointing arrow
+                } else {
+                    toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
+                }
+            });
+
+            // Create table element
+            const table = document.createElement("table");
+
+            // Create table header
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            headers.forEach(headerText => {
+                const th = document.createElement("th");
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create table body
+            const tbody = document.createElement("tbody");
+
+            data.data.forEach(item => {
+                const row = document.createElement("tr");
+
+                // Helper function to safely access nested properties
+                const getValue = (obj, path) => {
+                    return path.split('.').reduce((acc, part) => acc && acc[part], obj) || "";
+                };
+
+                const rowData = [
+                    item.id,
+                    item.numero,
+                    item.data,
+                    item.dataSaida,
+                    item.dataPrevista !== "0000-00-00" ? item.dataPrevista : "",
+                    item.totalProdutos,
+                    item.total,
+                    getValue(item, "situacao.valor"),
+                    getValue(item, "situacao.id"),
+                    item.numeroLoja,
+                    getValue(item, "loja.id"),
+                    getValue(item, "contato.tipoPessoa"),
+                    getValue(item, "contato.nome"),
+                    getValue(item, "contato.id"),
+                    getValue(item, "contato.numeroDocumento")
+                ];
+
+                rowData.forEach((cellData, index) => {
+                    const td = document.createElement("td");
+                    td.textContent = cellData;
+                    td.setAttribute("data-label", headers[index]); // For responsive design
+                    row.appendChild(td);
+                });
+
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(tbody);
+            content.appendChild(table);
+        }
     </script>
 </head>
 <body>
     <button onclick="fetchSalesOrdersManual()">Fetch Sales Orders Manual</button>
-    <pre id="response"></pre>
+    <div id="response"></div>
 </body>
 </html>
 
