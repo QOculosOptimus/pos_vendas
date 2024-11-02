@@ -5,15 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fetch Sales Orders</title>
     <script>
-        function redirectToBling() {
-            google.script.run.withSuccessHandler(function(url) {
-                window.open(url, '_blank');
-            }).getRedirectUrl();
+        async function fetchSalesOrdersManual() {
+            const isTokenExpired = await google.script.run.checkTokenExpiration();
+
+            if (isTokenExpired) {
+                google.script.run.withSuccessHandler(function(url) {
+                    window.open(url, '_blank');
+                }).getRedirectUrl();
+            } else {
+                google.script.run.withSuccessHandler(function(response) {
+                    document.getElementById("response").textContent = JSON.stringify(response, null, 2);
+                }).fetchSalesOrders();
+            }
         }
     </script>
 </head>
 <body>
-    <button onclick="redirectToBling()">Fetch Sales Orders Manual</button>
+    <button onclick="fetchSalesOrdersManual()">Fetch Sales Orders Manual</button>
+    <pre id="response"></pre>
 </body>
 </html>
 

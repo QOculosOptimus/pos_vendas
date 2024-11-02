@@ -12,13 +12,13 @@ function doGet(e) {
         // Exchange the authorization code for a bearer token
         const tokenData = fetchBearerToken(e.parameter.code);
         if (tokenData) {
-            sheet.getRange("C5").setValue(tokenData.refresh_token);
-            sheet.getRange("C6").setValue(tokenData.access_token);
+            sheet.getRange("B5").setValue(tokenData.refresh_token);
+            sheet.getRange("B6").setValue(tokenData.access_token);
             
             // Calculate the expiration time and record it in C7
             const expirationTime = new Date();
             expirationTime.setSeconds(expirationTime.getSeconds() + tokenData.expires_in);
-            sheet.getRange("C7").setValue(expirationTime);
+            sheet.getRange("B7").setValue(expirationTime);
         }
     }
     return HtmlService.createHtmlOutputFromFile('index');
@@ -69,5 +69,28 @@ function generateRandomString(length) {
         result += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return result;
+}
+
+function checkTokenExpiration() {
+    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+    const expirationTime = sheet.getRange("B7").getValue();
+    const currentTime = new Date();
+    return currentTime >= expirationTime;
+}
+
+function fetchSalesOrders() {
+    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+    const accessToken = sheet.getRange("B6").getValue();
+    const url = 'https://developer.bling.com.br/api/bling/pedidos/vendas?pagina=1&limite=100&dataInicial=2024-06-01&dataFinal=2024-12-15';
+    
+    const response = UrlFetchApp.fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'accept': 'application/json'
+        }
+    });
+    
+    return JSON.parse(response.getContentText());
 }
 
