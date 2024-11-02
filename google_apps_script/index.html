@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Sales Orders</title>
+    <script>
+        function redirectToBling() {
+            google.script.run.withSuccessHandler(function(url) {
+                window.open(url, '_blank');
+            }).getRedirectUrl();
+        }
+    </script>
+</head>
+<body>
+    <button onclick="redirectToBling()">Fetch Sales Orders Manual</button>
+</body>
+</html>
+
