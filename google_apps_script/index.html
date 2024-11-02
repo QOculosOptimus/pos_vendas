@@ -79,16 +79,32 @@
         }
     </style>
     <script>
-        function fetchSalesOrdersManual() {
+	function fetchSalesOrdersManual() {
             google.script.run
-                .withSuccessHandler(renderSalesOrdersTable)
-                .fetchSalesOrders();
+                .withSuccessHandler(function(isTokenExpired) {
+                    if (isTokenExpired) {
+                        google.script.run.withSuccessHandler(function(url) {
+                            window.open(url, '_blank');
+                        }).getRedirectUrl();
+                    } else {
+                        google.script.run.withSuccessHandler(renderSalesOrdersTable).fetchSalesOrders();
+                    }
+                })
+                .checkTokenExpiration();
         }
 
         function fetchProducts() {
             google.script.run
-                .withSuccessHandler(renderProductsTable)
-                .fetchProducts();
+                .withSuccessHandler(function(isTokenExpired) {
+                    if (isTokenExpired) {
+                        google.script.run.withSuccessHandler(function(url) {
+                            window.open(url, '_blank');
+                        }).getRedirectUrl();
+                    } else {
+                        google.script.run.withSuccessHandler(renderProductsTable).fetchProducts();
+                    }
+                })
+                .checkTokenExpiration();
         }
 
         function renderSalesOrdersTable(data) {
