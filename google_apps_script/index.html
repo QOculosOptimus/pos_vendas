@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch Sales Orders</title>
+    <title>Fetch Sales Orders and Products</title>
     <style>
-        /* Basic styling for the table */
+        /* Existing styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -18,8 +18,8 @@
             vertical-align: top;
         }
         th {
-            background-color: #4CAF50; /* Changed background color for better contrast */
-            color: white; /* Changed font color for better contrast */
+            background-color: #4CAF50;
+            color: white;
         }
         /* Responsive design */
         @media screen and (max-width: 768px) {
@@ -81,48 +81,157 @@
     <script>
         function fetchSalesOrdersManual() {
             google.script.run
-                .withSuccessHandler(function(isTokenExpired) {
-                    if (isTokenExpired) {
-                        google.script.run.withSuccessHandler(function(url) {
-                            window.open(url, '_blank');
-                        }).getRedirectUrl();
-                    } else {
-                        google.script.run.withSuccessHandler(function(response) {
-                            renderTable(response);
-                        }).fetchSalesOrders();
-                    }
-                })
-                .checkTokenExpiration();
+                .withSuccessHandler(renderSalesOrdersTable)
+                .fetchSalesOrders();
         }
 
-        function renderTable(data) {
+        function fetchProducts() {
+            google.script.run
+                .withSuccessHandler(renderProductsTable)
+                .fetchProducts();
+        }
+
+        function renderSalesOrdersTable(data) {
+          const container = document.getElementById("response");
+          container.innerHTML = ""; // Clear previous content
+
+          if (!data || !data.data || data.data.length === 0) {
+              container.textContent = "Sem vendas encontradas.";
+              return;
+          }
+
+          // Define table headers for sales orders
+          const headers = [
+              "ID",
+              "Número",
+              "Data",
+              "Data Saída",
+              "Data Prevista",
+              "Total Produtos",
+              "Total",
+              "Situação Valor",
+              "Situação ID",
+              "Número Loja",
+              "Loja ID",
+              "Contato Tipo Pessoa",
+              "Contato Nome",
+              "Contato ID",
+              "Contato Documento"
+          ];
+
+          // Create collapsible container for the table
+          const collapsible = document.createElement("div");
+          collapsible.className = "collapsible";
+
+          // Create collapsible header
+          const header = document.createElement("div");
+          header.className = "collapsible-header";
+          header.textContent = "Vendas";
+
+          // Create toggle icon for collapsible
+          const toggleIcon = document.createElement("span");
+          toggleIcon.className = "toggle-icon";
+          toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
+          header.appendChild(toggleIcon);
+
+          // Create collapsible content section
+          const content = document.createElement("div");
+          content.className = "collapsible-content";
+
+          // Append header and content to collapsible container
+          collapsible.appendChild(header);
+          collapsible.appendChild(content);
+
+          // Append collapsible container to response container
+          container.appendChild(collapsible);
+
+          // Add event listener for expanding/collapsing table
+          header.addEventListener("click", function() {
+              collapsible.classList.toggle("active");
+              toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;"; // Down or right arrow
+          });
+
+          // Create table element
+          const table = document.createElement("table");
+
+          // Create table header
+          const thead = document.createElement("thead");
+          const headerRow = document.createElement("tr");
+          headers.forEach(headerText => {
+              const th = document.createElement("th");
+              th.textContent = headerText;
+              headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          // Create table body
+          const tbody = document.createElement("tbody");
+
+          // Helper function to access nested properties safely
+          const getValue = (obj, path) => path.split('.').reduce((acc, part) => acc && acc[part], obj) || "";
+
+          data.data.forEach(item => {
+              const row = document.createElement("tr");
+
+              // Define row data for each sales order item
+              const rowData = [
+                  item.id,
+                  item.numero,
+                  item.data,
+                  item.dataSaida,
+                  item.dataPrevista !== "0000-00-00" ? item.dataPrevista : "",
+                  item.totalProdutos,
+                  item.total,
+                  getValue(item, "situacao.valor"),
+                  getValue(item, "situacao.id"),
+                  item.numeroLoja,
+                  getValue(item, "loja.id"),
+                  getValue(item, "contato.tipoPessoa"),
+                  getValue(item, "contato.nome"),
+                  getValue(item, "contato.id"),
+                  getValue(item, "contato.numeroDocumento")
+              ];
+
+              rowData.forEach((cellData, index) => {
+                  const td = document.createElement("td");
+                  td.textContent = cellData;
+                  td.setAttribute("data-label", headers[index]); // For responsive design
+                  row.appendChild(td);
+              });
+
+              tbody.appendChild(row);
+          });
+
+          table.appendChild(tbody);
+          content.appendChild(table);
+        }
+
+
+        function renderProductsTable(data) {
             const container = document.getElementById("response");
             container.innerHTML = ""; // Clear previous content
 
             if (!data || !data.data || data.data.length === 0) {
-                container.textContent = "No sales orders found.";
+                container.textContent = "No products found.";
                 return;
             }
 
-            // Define table headers based on the keys in the JSON data
+            // Define table headers for products
             const headers = [
                 "ID",
-                "Número",
-                "Data",
-                "Data Saída",
-                "Data Prevista",
-                "Total Produtos",
-                "Total",
-                "Situação Valor",
-                "Situação ID",
-                "Número Loja",
-                "Loja ID",
-                "Contato Tipo Pessoa",
-                "Contato Nome",
-                "Contato ID",
-                "Contato Documento"
+                "Nome",
+                "Código",
+                "Preço",
+                "Preço de Custo",
+                "Saldo Virtual Total",
+                "Tipo",
+                "Situação",
+                "Formato",
+                "Descrição Curta",
+                "Imagem URL"
             ];
-
+	    
             // Create collapsible container
             const collapsible = document.createElement("div");
             collapsible.className = "collapsible";
@@ -130,7 +239,7 @@
             // Create collapsible header
             const header = document.createElement("div");
             header.className = "collapsible-header";
-            header.textContent = "Sales Orders";
+            header.textContent = "Produtos";
             
             // Create toggle icon
             const toggleIcon = document.createElement("span");
@@ -180,27 +289,19 @@
             data.data.forEach(item => {
                 const row = document.createElement("tr");
 
-                // Helper function to safely access nested properties
-                const getValue = (obj, path) => {
-                    return path.split('.').reduce((acc, part) => acc && acc[part], obj) || "";
-                };
-
+                // Map each product's data to table cells
                 const rowData = [
                     item.id,
-                    item.numero,
-                    item.data,
-                    item.dataSaida,
-                    item.dataPrevista !== "0000-00-00" ? item.dataPrevista : "",
-                    item.totalProdutos,
-                    item.total,
-                    getValue(item, "situacao.valor"),
-                    getValue(item, "situacao.id"),
-                    item.numeroLoja,
-                    getValue(item, "loja.id"),
-                    getValue(item, "contato.tipoPessoa"),
-                    getValue(item, "contato.nome"),
-                    getValue(item, "contato.id"),
-                    getValue(item, "contato.numeroDocumento")
+                    item.nome,
+                    item.codigo,
+                    item.preco,
+                    item.precoCusto,
+                    item.estoque.saldoVirtualTotal,
+                    item.tipo,
+                    item.situacao,
+                    item.formato,
+                    item.descricaoCurta,
+                    item.imagemURL
                 ];
 
                 rowData.forEach((cellData, index) => {
@@ -220,6 +321,7 @@
 </head>
 <body>
     <button onclick="fetchSalesOrdersManual()">Fetch Sales Orders Manual</button>
+    <button onclick="fetchProducts()">Fetch Products</button>
     <div id="response"></div>
 </body>
 </html>

@@ -94,3 +94,19 @@ function fetchSalesOrders() {
     return JSON.parse(response.getContentText());
 }
 
+function fetchProducts() {
+    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+    const accessToken = sheet.getRange("B6").getValue();
+    const url = 'https://developer.bling.com.br/api/bling/produtos?pagina=1&limite=100&criterio=1&tipo=T&dataInclusaoInicial=2024-06-01%2012%3A00%3A00&dataInclusaoFinal=2024-12-01%2013%3A00%3A00&nome=%20';
+    
+    const response = UrlFetchApp.fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'accept': 'application/json'
+        }
+    });
+    
+    return JSON.parse(response.getContentText());
+}
+
