@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fetch Sales Orders and Products</title>
     <style>
-        /* Existing styles */
+        /* Styles */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -46,9 +45,9 @@
                 font-weight: bold;
             }
         }
-        /* Styling for the collapsible container */
+        /* Collapsible container */
         .collapsible {
-            background-color: #f0f8ff; /* Lighter background color for collapsible container */
+            background-color: #f0f8ff;
             border: 1px solid #ccc;
             border-radius: 4px;
             margin-top: 20px;
@@ -66,7 +65,7 @@
         .collapsible-content {
             display: none;
             padding: 10px;
-            overflow-x: auto; /* Ensure content doesn't spill out */
+            overflow-x: auto;
         }
         .collapsible.active .collapsible-content {
             display: block;
@@ -79,175 +78,19 @@
         }
     </style>
     <script>
-	function fetchSalesOrdersManual() {
-            google.script.run
-                .withSuccessHandler(function(isTokenExpired) {
-                    if (isTokenExpired) {
-                        google.script.run.withSuccessHandler(function(url) {
-                            window.open(url, '_blank');
-                        }).getRedirectUrl();
-                    } else {
-                        google.script.run.withSuccessHandler(renderSalesOrdersTable).fetchSalesOrders();
-                    }
-                })
-                .checkTokenExpiration();
+        function getValue(obj, path) {
+            return path.split('.').reduce((acc, part) => acc && acc[part], obj) || "";
         }
 
-        function fetchProducts() {
-            google.script.run
-                .withSuccessHandler(function(isTokenExpired) {
-                    if (isTokenExpired) {
-                        google.script.run.withSuccessHandler(function(url) {
-                            window.open(url, '_blank');
-                        }).getRedirectUrl();
-                    } else {
-                        google.script.run.withSuccessHandler(renderProductsTable).fetchProducts();
-                    }
-                })
-                .checkTokenExpiration();
-        }
-
-        function renderSalesOrdersTable(data) {
-          const container = document.getElementById("response");
-          container.innerHTML = ""; // Clear previous content
-
-          if (!data || !data.data || data.data.length === 0) {
-              container.textContent = "Sem vendas encontradas.";
-              return;
-          }
-
-          // Define table headers for sales orders
-          const headers = [
-              "ID",
-              "Número",
-              "Data",
-              "Data Saída",
-              "Data Prevista",
-              "Total Produtos",
-              "Total",
-              "Situação Valor",
-              "Situação ID",
-              "Número Loja",
-              "Loja ID",
-              "Contato Tipo Pessoa",
-              "Contato Nome",
-              "Contato ID",
-              "Contato Documento"
-          ];
-
-          // Create collapsible container for the table
-          const collapsible = document.createElement("div");
-          collapsible.className = "collapsible";
-
-          // Create collapsible header
-          const header = document.createElement("div");
-          header.className = "collapsible-header";
-          header.textContent = "Vendas";
-
-          // Create toggle icon for collapsible
-          const toggleIcon = document.createElement("span");
-          toggleIcon.className = "toggle-icon";
-          toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
-          header.appendChild(toggleIcon);
-
-          // Create collapsible content section
-          const content = document.createElement("div");
-          content.className = "collapsible-content";
-
-          // Append header and content to collapsible container
-          collapsible.appendChild(header);
-          collapsible.appendChild(content);
-
-          // Append collapsible container to response container
-          container.appendChild(collapsible);
-
-          // Add event listener for expanding/collapsing table
-          header.addEventListener("click", function() {
-              collapsible.classList.toggle("active");
-              toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;"; // Down or right arrow
-          });
-
-          // Create table element
-          const table = document.createElement("table");
-
-          // Create table header
-          const thead = document.createElement("thead");
-          const headerRow = document.createElement("tr");
-          headers.forEach(headerText => {
-              const th = document.createElement("th");
-              th.textContent = headerText;
-              headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-          table.appendChild(thead);
-
-          // Create table body
-          const tbody = document.createElement("tbody");
-
-          // Helper function to access nested properties safely
-          const getValue = (obj, path) => path.split('.').reduce((acc, part) => acc && acc[part], obj) || "";
-
-          data.data.forEach(item => {
-              const row = document.createElement("tr");
-
-              // Define row data for each sales order item
-              const rowData = [
-                  item.id,
-                  item.numero,
-                  item.data,
-                  item.dataSaida,
-                  item.dataPrevista !== "0000-00-00" ? item.dataPrevista : "",
-                  item.totalProdutos,
-                  item.total,
-                  getValue(item, "situacao.valor"),
-                  getValue(item, "situacao.id"),
-                  item.numeroLoja,
-                  getValue(item, "loja.id"),
-                  getValue(item, "contato.tipoPessoa"),
-                  getValue(item, "contato.nome"),
-                  getValue(item, "contato.id"),
-                  getValue(item, "contato.numeroDocumento")
-              ];
-
-              rowData.forEach((cellData, index) => {
-                  const td = document.createElement("td");
-                  td.textContent = cellData;
-                  td.setAttribute("data-label", headers[index]); // For responsive design
-                  row.appendChild(td);
-              });
-
-              tbody.appendChild(row);
-          });
-
-          table.appendChild(tbody);
-          content.appendChild(table);
-        }
-
-
-        function renderProductsTable(data) {
-            const container = document.getElementById("response");
-            container.innerHTML = ""; // Clear previous content
+        function renderTable(data, options) {
+            const container = document.getElementById(options.containerId || "response");
+            container.innerHTML = "";
 
             if (!data || !data.data || data.data.length === 0) {
-                container.textContent = "No products found.";
+                container.textContent = options.emptyMessage || "No data found.";
                 return;
             }
 
-            // Define table headers for products
-            const headers = [
-                "ID",
-                "Nome",
-                "Código",
-                "Preço",
-                "Preço de Custo",
-                "Saldo Virtual Total",
-                "Tipo",
-                "Situação",
-                "Formato",
-                "Descrição Curta",
-                "Imagem URL"
-            ];
-	    
             // Create collapsible container
             const collapsible = document.createElement("div");
             collapsible.className = "collapsible";
@@ -255,83 +98,115 @@
             // Create collapsible header
             const header = document.createElement("div");
             header.className = "collapsible-header";
-            header.textContent = "Produtos";
-            
-            // Create toggle icon
+            header.textContent = options.title || "Data";
+
+            // Toggle icon
             const toggleIcon = document.createElement("span");
             toggleIcon.className = "toggle-icon";
-            toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
+            toggleIcon.innerHTML = "&#9654;";
             header.appendChild(toggleIcon);
 
-            // Create collapsible content
+            // Collapsible content
             const content = document.createElement("div");
             content.className = "collapsible-content";
 
-            // Append header and content to collapsible container
+            // Append elements
             collapsible.appendChild(header);
             collapsible.appendChild(content);
-
-            // Append collapsible to container
             container.appendChild(collapsible);
 
-            // Event listener for collapsing/expanding
+            // Toggle event
             header.addEventListener("click", function() {
                 collapsible.classList.toggle("active");
-                // Toggle the arrow direction
-                if (collapsible.classList.contains("active")) {
-                    toggleIcon.innerHTML = "&#9660;"; // Down-pointing arrow
-                } else {
-                    toggleIcon.innerHTML = "&#9654;"; // Right-pointing arrow
-                }
+                toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;";
             });
 
-            // Create table element
+            // Create table
             const table = document.createElement("table");
-
-            // Create table header
             const thead = document.createElement("thead");
             const headerRow = document.createElement("tr");
-            headers.forEach(headerText => {
+            options.headers.forEach(text => {
                 const th = document.createElement("th");
-                th.textContent = headerText;
+                th.textContent = text;
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
-            // Create table body
+            // Table body
             const tbody = document.createElement("tbody");
-
             data.data.forEach(item => {
                 const row = document.createElement("tr");
-
-                // Map each product's data to table cells
-                const rowData = [
-                    item.id,
-                    item.nome,
-                    item.codigo,
-                    item.preco,
-                    item.precoCusto,
-                    item.estoque.saldoVirtualTotal,
-                    item.tipo,
-                    item.situacao,
-                    item.formato,
-                    item.descricaoCurta,
-                    item.imagemURL
-                ];
-
-                rowData.forEach((cellData, index) => {
+                options.dataFields.forEach((field, index) => {
                     const td = document.createElement("td");
+                    const cellData = typeof field === 'function' ? field(item) : getValue(item, field);
                     td.textContent = cellData;
-                    td.setAttribute("data-label", headers[index]); // For responsive design
+                    td.setAttribute("data-label", options.headers[index]);
                     row.appendChild(td);
                 });
-
                 tbody.appendChild(row);
             });
-
             table.appendChild(tbody);
             content.appendChild(table);
+        }
+
+        function fetchData(fetchFunc, renderFunc) {
+            google.script.run
+                .withSuccessHandler(isTokenExpired => {
+                    if (isTokenExpired) {
+                        google.script.run.withSuccessHandler(url => {
+                            window.open(url, '_blank');
+                        }).getRedirectUrl();
+                    } else {
+                        google.script.run.withSuccessHandler(renderFunc)[fetchFunc]();
+                    }
+                })
+                .checkTokenExpiration();
+        }
+
+        function fetchSalesOrdersManual() {
+            fetchData('fetchSalesOrders', renderSalesOrdersTable);
+        }
+
+        function fetchProducts() {
+            fetchData('fetchProducts', renderProductsTable);
+        }
+
+        function renderSalesOrdersTable(data) {
+            renderTable(data, {
+                title: "Vendas",
+                emptyMessage: "Sem vendas encontradas.",
+                headers: [
+                    "ID", "Número", "Data", "Data Saída", "Data Prevista",
+                    "Total Produtos", "Total", "Situação Valor", "Situação ID",
+                    "Número Loja", "Loja ID", "Contato Tipo Pessoa", "Contato Nome",
+                    "Contato ID", "Contato Documento"
+                ],
+                dataFields: [
+                    'id', 'numero', 'data', 'dataSaida',
+                    item => item.dataPrevista !== "0000-00-00" ? item.dataPrevista : "",
+                    'totalProdutos', 'total', 'situacao.valor', 'situacao.id',
+                    'numeroLoja', 'loja.id', 'contato.tipoPessoa', 'contato.nome',
+                    'contato.id', 'contato.numeroDocumento'
+                ]
+            });
+        }
+
+        function renderProductsTable(data) {
+            renderTable(data, {
+                title: "Produtos",
+                emptyMessage: "No products found.",
+                headers: [
+                    "ID", "Nome", "Código", "Preço", "Preço de Custo",
+                    "Saldo Virtual Total", "Tipo", "Situação", "Formato",
+                    "Descrição Curta", "Imagem URL"
+                ],
+                dataFields: [
+                    'id', 'nome', 'codigo', 'preco', 'precoCusto',
+                    'estoque.saldoVirtualTotal', 'tipo', 'situacao', 'formato',
+                    'descricaoCurta', 'imagemURL'
+                ]
+            });
         }
     </script>
 </head>
