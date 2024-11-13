@@ -1,9 +1,11 @@
 const sheetId = "1b2ReDDV_cPomVDR0sPcoFuQEhd8brGBnF7AFblQTIvY";
-const sheetName = "Página1";
+const authSheetName = "AuthStuff";
+const vendasSheetName = "vendas";
+const produtosSheetName = "produtos";
 
 function doGet(e) {
     if (e.parameter.code && e.parameter.state) {
-        const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+        const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(authSheetName);
         sheet.getRange("B1").setValue(e.parameter.code);
         sheet.getRange("B2").setValue(new Date());
         sheet.getRange("B3").setValue(e.parameter.state);
@@ -72,17 +74,22 @@ function generateRandomString(length) {
 }
 
 function checkTokenExpiration() {
-    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(authSheetName);
     const expirationTime = sheet.getRange("B7").getValue();
     const currentTime = new Date();
     return currentTime >= expirationTime;
 }
 
 function fetchSalesOrders() {
-    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
-    const accessToken = sheet.getRange("B6").getValue();
+    // Open the spreadsheet and access the AuthStuff sheet to get the access token
+    const spreadsheet = SpreadsheetApp.openById(sheetId);
+    const authSheet = spreadsheet.getSheetByName(authSheetName);
+    const accessToken = authSheet.getRange("B6").getValue();
+
+    // Define the API endpoint URL
     const url = 'https://developer.bling.com.br/api/bling/pedidos/vendas?pagina=1&limite=100&dataInicial=2024-06-01&dataFinal=2024-12-15';
-    
+
+    // Fetch the data from the API
     const response = UrlFetchApp.fetch(url, {
         method: 'GET',
         headers: {
@@ -90,15 +97,77 @@ function fetchSalesOrders() {
             'accept': 'application/json'
         }
     });
-    
-    return JSON.parse(response.getContentText());
+
+    // Parse the JSON response
+    const jsonResponse = JSON.parse(response.getContentText());
+
+    // Access the 'vendas' sheet
+    const vendasSheet = spreadsheet.getSheetByName(vendasSheetName);
+
+    // Define the header row based on the specified columns
+    const headers = [
+        "ID",
+        "Número",
+        "Data",
+        "Data Saída",
+        "Data Prevista",
+        "Total Produtos",
+        "Total",
+        "Situação Valor",
+        "Situação ID",
+        "Número Loja",
+        "Loja ID",
+        "Contato Tipo Pessoa",
+        "Contato Nome",
+        "Contato ID",
+        "Contato Documento"
+    ];
+
+    // Clear existing content in the 'vendas' sheet
+    vendasSheet.clearContents();
+
+    // Set the header row
+    vendasSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Prepare the data rows
+    const dataRows = jsonResponse.data.map(order => [
+        order.id,
+        order.numero,
+        order.data,
+        order.dataSaida,
+        order.dataPrevista,
+        order.totalProdutos,
+        order.total,
+        order.situacao.valor,
+        order.situacao.id,
+        order.numeroLoja,
+        order.loja.id,
+        order.contato.tipoPessoa,
+        order.contato.nome,
+        order.contato.id,
+        order.contato.numeroDocumento
+    ]);
+
+    // Check if there are data rows to insert
+    if (dataRows.length > 0) {
+        // Determine the range to insert data
+        vendasSheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
+    }
+
+    // Return the parsed JSON response
+    return jsonResponse;
 }
 
 function fetchProducts() {
-    const sheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
-    const accessToken = sheet.getRange("B6").getValue();
+    // Open the spreadsheet and access the AuthStuff sheet to get the access token
+    const spreadsheet = SpreadsheetApp.openById(sheetId);
+    const authSheet = spreadsheet.getSheetByName(authSheetName);
+    const accessToken = authSheet.getRange("B6").getValue();
+
+    // Define the API endpoint URL
     const url = 'https://developer.bling.com.br/api/bling/produtos?pagina=1&limite=100&criterio=1&tipo=T&dataInclusaoInicial=2024-06-01%2012%3A00%3A00&dataInclusaoFinal=2024-12-01%2013%3A00%3A00&nome=%20';
-    
+
+    // Fetch the data from the API
     const response = UrlFetchApp.fetch(url, {
         method: 'GET',
         headers: {
@@ -106,7 +175,55 @@ function fetchProducts() {
             'accept': 'application/json'
         }
     });
-    
-    return JSON.parse(response.getContentText());
-}
 
+    // Parse the JSON response
+    const jsonResponse = JSON.parse(response.getContentText());
+
+    // Access the 'produtos' sheet
+    const produtosSheet = spreadsheet.getSheetByName(produtosSheetName);
+
+    // Define the header row based on the specified columns
+    const headers = [
+        "ID",
+        "Nome",
+        "Código",
+        "Preço",
+        "Preço de Custo",
+        "Saldo Virtual Total",
+        "Tipo",
+        "Situação",
+        "Formato",
+        "Descrição Curta",
+        "Imagem URL"
+    ];
+
+    // Clear existing content in the 'produtos' sheet
+    produtosSheet.clearContents();
+
+    // Set the header row
+    produtosSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Prepare the data rows
+    const dataRows = jsonResponse.data.map(product => [
+        product.id,
+        product.nome,
+        product.codigo,
+        product.preco,
+        product.precoCusto,
+        product.estoque.saldoVirtualTotal,
+        product.tipo,
+        product.situacao,
+        product.formato,
+        product.descricaoCurta,
+        product.imagemURL
+    ]);
+
+    // Check if there are data rows to insert
+    if (dataRows.length > 0) {
+        // Determine the range to insert data
+        produtosSheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
+    }
+
+    // Return the parsed JSON response
+    return jsonResponse;
+}
