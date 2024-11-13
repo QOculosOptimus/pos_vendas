@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "id": 16354261670,
+      "nome": "Ana Hickmann AH90049  56 - G21",
+      "codigo": "1047167",
+      "preco": 570,
+      "precoCusto": 0,
+      "estoque": {
+        "saldoVirtualTotal": 0
+      },
+      "tipo": "P",
+      "situacao": "A",
+      "formato": "S",
+      "descricaoCurta": "",
+      "imagemURL": ""
+    },
+    {
+      "id": 16354203981,
+      "nome": "Alexa Ferretti DN9018 - CLIP-ON  52 - C8",
+      "codigo": "2071222",
+      "preco": 369,
+      "precoCusto": 0,
+      "estoque": {
+        "saldoVirtualTotal": 0
+      },
+      "tipo": "P",
+      "situacao": "A",
+      "formato": "S",
+      "descricaoCurta": "",
+      "imagemURL": ""
+    }
+  ]
+}
