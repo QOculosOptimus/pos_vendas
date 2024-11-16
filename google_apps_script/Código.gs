@@ -86,51 +86,62 @@ function fetchSalesOrders() {
     const authSheet = spreadsheet.getSheetByName(authSheetName);
     const accessToken = authSheet.getRange("B6").getValue();
 
-    // Define the API endpoint URL
-    const url = 'https://developer.bling.com.br/api/bling/pedidos/vendas?pagina=1&limite=100&dataInicial=2024-06-01&dataFinal=2024-12-15';
-
-    // Fetch the data from the API
-    const response = UrlFetchApp.fetch(url, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'accept': 'application/json'
-        }
-    });
-
-    // Parse the JSON response
-    const jsonResponse = JSON.parse(response.getContentText());
-
     // Access the 'vendas' sheet
     const vendasSheet = spreadsheet.getSheetByName(vendasSheetName);
 
-    // Define the header row based on the specified columns
-    const headers = [
-        "ID",
-        "Número",
-        "Data",
-        "Data Saída",
-        "Data Prevista",
-        "Total Produtos",
-        "Total",
-        "Situação Valor",
-        "Situação ID",
-        "Número Loja",
-        "Loja ID",
-        "Contato Tipo Pessoa",
-        "Contato Nome",
-        "Contato ID",
-        "Contato Documento"
-    ];
+    // Get the last order date from the sheet, or use 2024-06-01 as the start date
+    const lastOrderDate = getLastOrderDate(vendasSheet) || '2024-06-01';
 
-    // Clear existing content in the 'vendas' sheet
-    vendasSheet.clearContents();
+    // Define the API base URL and parameters
+    const baseUrl = 'https://developer.bling.com.br/api/bling/pedidos/vendas';
+    const endDate = new Date(); // Today
+    const formattedEndDate = formatDate(endDate);
 
-    // Set the header row
-    vendasSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    // Initialize pagination
+    let page = 1;
+    let allOrders = [];
+
+    // Loop to fetch data page by page until all orders are retrieved
+    while (true) {
+	console.log('Fetching page', page);
+        const url = `${baseUrl}?pagina=${page}&limite=100&dataInicial=${lastOrderDate}&dataFinal=${formattedEndDate}`;
+
+        // Fetch the data from the API
+        const response = UrlFetchApp.fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'accept': 'application/json'
+            }
+        });
+
+        // Parse the JSON response
+        const jsonResponse = JSON.parse(response.getContentText());
+
+        // If no data is returned, break out of the loop
+        if (!jsonResponse.data || jsonResponse.data.length === 0) {
+            break;
+        }
+
+        // Append the data to the allOrders array
+        allOrders = allOrders.concat(jsonResponse.data);
+
+        // Check if we have fewer than 100 orders, indicating it's the last page, if it's not the last page, wait 5 seconds to avoid rate limiting
+        if (jsonResponse.data.length < 100) {
+            break;
+        } else {
+	    Utilities.sleep(5000);
+	}
+
+        // Move to the next page
+        page++;
+    }
+
+    // Invert the order of "allOrders"
+    allOrders.reverse();
 
     // Prepare the data rows
-    const dataRows = jsonResponse.data.map(order => [
+    const dataRows = allOrders.map(order => [
         order.id,
         order.numero,
         order.data,
@@ -148,14 +159,50 @@ function fetchSalesOrders() {
         order.contato.numeroDocumento
     ]);
 
-    // Check if there are data rows to insert
+    // Clear existing content in the 'vendas' sheet, but retain the header row
+    vendasSheet.clearContents();
+    const headers = [
+        "ID",
+        "Número",
+        "Data",
+        "Data Saída",
+        "Data Prevista",
+        "Total Produtos",
+        "Total",
+        "Situação Valor",
+        "Situação ID",
+        "Número Loja",
+        "Loja ID",
+        "Contato Tipo Pessoa",
+        "Contato Nome",
+        "Contato ID",
+        "Contato Documento"
+    ];
+    vendasSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    // Set the data rows starting from row 2
     if (dataRows.length > 0) {
-        // Determine the range to insert data
         vendasSheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
     }
 
-    // Return the parsed JSON response
-    return jsonResponse;
+    return true;
+}
+
+// Function to get the last order date from the 'vendas' sheet
+function getLastOrderDate(vendasSheet) {
+    const lastRow = vendasSheet.getLastRow();
+    if (lastRow < 2) return null; // No data in the sheet
+
+    const lastDate = vendasSheet.getRange(lastRow, 3).getValue(); // Assuming 'Data' is in the 3rd column
+    return lastDate || null;
+}
+
+// Helper function to format dates as yyyy-mm-dd
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function fetchProducts() {

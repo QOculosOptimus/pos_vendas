@@ -165,7 +165,13 @@
         }
 
         function fetchSalesOrdersManual() {
-            fetchData('fetchSalesOrders', renderSalesOrdersTable);
+            // Fetch sales orders and display the message "Fetching sales orders..." while loading, and "Sales orders fetched." when done
+	    const container = document.getElementById("response");
+	    container.textContent = "Fetching sales orders...";
+	    // fetchSalesOrders function, and when it's done, container.textContent will be updated to "Sales orders fetched."
+	    google.script.run.withSuccessHandler(() => container.textContent = "Sales orders fetched.").fetchSalesOrders();
+	    
+	    
         }
 
         function fetchProducts() {
