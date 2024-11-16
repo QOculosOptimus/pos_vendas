@@ -159,8 +159,6 @@ function fetchSalesOrders() {
         order.contato.numeroDocumento
     ]);
 
-    // Clear existing content in the 'vendas' sheet, but retain the header row
-    vendasSheet.clearContents();
     const headers = [
         "ID",
         "Número",
@@ -180,9 +178,15 @@ function fetchSalesOrders() {
     ];
     vendasSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 
-    // Set the data rows starting from row 2
+    // Set the data rows starting from the last row + 1 of the sheet or the first row that has the third column equal to the last order date
     if (dataRows.length > 0) {
-        vendasSheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
+        const lastRow = vendasSheet.getLastRow();
+	const lastDateRow = vendasSheet.getRange("C:C").createTextFinder(lastOrderDate).findNext();
+	console.log('lastRow:', lastRow);
+	// console.log('lastDateRow:', lastDateRow);
+	const startRow = lastDateRow ? lastDateRow.getRow() : lastRow + 1;
+	console.log('startRow:', startRow);
+	vendasSheet.getRange(startRow, 1, dataRows.length, headers.length).setValues(dataRows);
     }
 
     return true;
@@ -194,7 +198,14 @@ function getLastOrderDate(vendasSheet) {
     if (lastRow < 2) return null; // No data in the sheet
 
     const lastDate = vendasSheet.getRange(lastRow, 3).getValue(); // Assuming 'Data' is in the 3rd column
-    return lastDate || null;
+    // Convert the string to a Date object
+    var dateObj = new Date(lastDate);
+    
+    // Format the date as YYYY-MM-DD
+    var formattedDate = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "yyyy-MM-dd");
+    
+    console.log(formattedDate); // Outputs: 2024-11-15
+    return formattedDate || null;
 }
 
 // Helper function to format dates as yyyy-mm-dd
@@ -274,3 +285,4 @@ function fetchProducts() {
     // Return the parsed JSON response
     return jsonResponse;
 }
+
