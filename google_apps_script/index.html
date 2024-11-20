@@ -183,6 +183,25 @@
               .checkTokenExpiration();
         }
 
+        function fetchItemsOrdersManual() {
+            // Fetch items orders and display the message "Fetching items orders..." while loading, and "Items orders fetched." when done
+            const container = document.getElementById("response");
+            container.textContent = "Fetching items orders...";
+            // fetchItemsOrders function, and when it's done, container.textContent will be updated to "Items orders fetched."
+            google.script.run.withSuccessHandler(isTokenExpired => {
+              if (isTokenExpired) {
+                google.script.run.withSuccessHandler(url => {
+                  window.open(url, '_blank');
+                }).getRedirectUrl();
+              } else {
+                google.script.run.withSuccessHandler(() => {
+                  container.textContent = "Items orders fetched.";
+                }).fetchItemsOrders();
+              }
+            })
+              .checkTokenExpiration();
+        }
+
 
         function fetchProducts() {
             fetchData('fetchProducts', renderProductsTable);
@@ -228,6 +247,7 @@
 </head>
 <body>
     <button onclick="fetchSalesOrdersManual()">Buscar Vendas</button>
+    <button onclick="fetchItemsOrdersManual()">Buscar Items das vendas</button>
     <button onclick="fetchProducts()">Buscar Produtos</button>
     <div id="response"></div>
 </body>
