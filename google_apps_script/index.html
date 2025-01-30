@@ -165,43 +165,40 @@
         }
 
         function fetchSalesOrdersManual() {
-            // Fetch sales orders and display the message "Fetching sales orders..." while loading, and "Sales orders fetched." when done
+            // Fetch sales orders and display the message "Fetching sales orders..." while loading
             const container = document.getElementById("response");
             container.textContent = "Fetching sales orders...";
-            // fetchSalesOrders function, and when it's done, container.textContent will be updated to "Sales orders fetched."
+
             google.script.run.withSuccessHandler(isTokenExpired => {
-              if (isTokenExpired) {
-                google.script.run.withSuccessHandler(url => {
-                  window.open(url, '_blank');
-                }).getRedirectUrl();
-              } else {
-                google.script.run.withSuccessHandler(() => {
-                  container.textContent = "Sales orders fetched.";
-                }).fetchSalesOrders();
-              }
-            })
-              .checkTokenExpiration();
+                if (isTokenExpired) {
+                    google.script.run.withSuccessHandler(url => {
+                        window.open(url, '_blank');
+                    }).getRedirectUrl();
+                } else {
+                    google.script.run.withSuccessHandler(() => {
+                        container.textContent = "Sales orders fetched.";
+                    }).fetchSalesOrders();
+                }
+            }).checkTokenExpiration();
         }
 
         function fetchItemsOrdersManual() {
-            // Fetch items orders and display the message "Fetching items orders..." while loading, and "Items orders fetched." when done
+            // Fetch items orders and display the message "Fetching items orders..." while loading
             const container = document.getElementById("response");
             container.textContent = "Fetching items orders...";
-            // fetchItemsOrders function, and when it's done, container.textContent will be updated to "Items orders fetched."
-            google.script.run.withSuccessHandler(isTokenExpired => {
-              if (isTokenExpired) {
-                google.script.run.withSuccessHandler(url => {
-                  window.open(url, '_blank');
-                }).getRedirectUrl();
-              } else {
-                google.script.run.withSuccessHandler(() => {
-                  container.textContent = "Items orders fetched.";
-                }).fetchItemsOrders();
-              }
-            })
-              .checkTokenExpiration();
-        }
 
+            google.script.run.withSuccessHandler(isTokenExpired => {
+                if (isTokenExpired) {
+                    google.script.run.withSuccessHandler(url => {
+                        window.open(url, '_blank');
+                    }).getRedirectUrl();
+                } else {
+                    google.script.run.withSuccessHandler(() => {
+                        container.textContent = "Items orders fetched.";
+                    }).fetchItemsOrders();
+                }
+            }).checkTokenExpiration();
+        }
 
         function fetchProducts() {
             fetchData('fetchProducts', renderProductsTable);
@@ -243,12 +240,39 @@
                 ]
             });
         }
+
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        // NEW FUNCTION: Combines "fetchSalesOrders" then "fetchItemsOrders"
+        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        function fetchSalesAndItems() {
+            const container = document.getElementById("response");
+            container.textContent = "Buscando vendas...";
+
+            // First, check if token expired
+            google.script.run.withSuccessHandler(isTokenExpired => {
+                if (isTokenExpired) {
+                    // If token is expired, prompt user to re-auth
+                    google.script.run.withSuccessHandler(url => {
+                        window.open(url, '_blank');
+                    }).getRedirectUrl();
+                } else {
+                    // Otherwise, fetch sales orders first
+                    google.script.run.withSuccessHandler(() => {
+                        container.textContent = "Vendas atualizadas! Agora buscando itens das vendas...";
+
+                        // Then fetch items orders
+                        google.script.run.withSuccessHandler(() => {
+                            container.textContent = "Vendas e itens atualizados!";
+                        }).fetchItemsOrders();
+                    }).fetchSalesOrders();
+                }
+            }).checkTokenExpiration();
+        }
     </script>
 </head>
 <body>
-    <button onclick="fetchSalesOrdersManual()">Buscar Vendas</button>
-    <button onclick="fetchItemsOrdersManual()">Buscar Items das vendas</button>
-    <button onclick="fetchProducts()">Buscar Produtos</button>
+    <!-- NEW BUTTON ABOVE ALL OTHERS -->
+    <button onclick="fetchSalesAndItems()">Buscar Vendas + Itens</button>
     <div id="response"></div>
 </body>
 </html>
