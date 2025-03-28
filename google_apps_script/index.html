@@ -276,9 +276,9 @@ function renderAuxRelatorioTable(data) {
     return;
   }
 
-  // Sort the data groups:
-  // - First, descending by 'valorTotal' (assumed to be numeric or convertible to number)
-  // - If 'valorTotal' is equal, sort alphabetically by 'nome'
+  // Sort the groups:
+  // - First, descending by 'valorTotal' (assumed numeric)
+  // - Then, if equal, alphabetically by 'nome'
   data.data.sort((a, b) => {
     const valorA = parseFloat(a.valorTotal) || 0;
     const valorB = parseFloat(b.valorTotal) || 0;
@@ -337,48 +337,81 @@ function renderAuxRelatorioTable(data) {
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
+
   data.data.forEach(group => {
-    const details = group.details;
-    details.forEach((detail, index) => {
-      const row = document.createElement("tr");
+    // Sort details by date descending.
+    // Assuming detail.data is in a format recognized by Date (ISO, etc.)
+    const sortedDetails = group.details.slice().sort((a, b) => {
+      return new Date(b.data) - new Date(a.data);
+    });
 
-      if (index === 0) {
-        const nomeCell = document.createElement("td");
-        nomeCell.textContent = group.nome;
-        nomeCell.rowSpan = details.length;
-        row.appendChild(nomeCell);
+    // Group details by date.
+    // We assume that sortedDetails are already ordered by date.
+    const detailsByDate = [];
+    let currentDateGroup = null;
 
-        const valorTotalCell = document.createElement("td");
-        valorTotalCell.textContent = group.valorTotal;
-        valorTotalCell.rowSpan = details.length;
-        row.appendChild(valorTotalCell);
+    sortedDetails.forEach(detail => {
+      if (!currentDateGroup || currentDateGroup.date !== detail.data) {
+        currentDateGroup = { date: detail.data, details: [] };
+        detailsByDate.push(currentDateGroup);
       }
+      currentDateGroup.details.push(detail);
+    });
 
-      const dataCell = document.createElement("td");
-      dataCell.textContent = detail.data;
-      row.appendChild(dataCell);
+    // Total number of rows for the group will be the sum of rows from all date groups.
+    const totalGroupRows = sortedDetails.length;
+    let isFirstGroupRow = true; // To render "Nome" and "Valor Total Nome" only once
 
-      const descricaoCell = document.createElement("td");
-      descricaoCell.textContent = detail.descricao;
-      row.appendChild(descricaoCell);
+    detailsByDate.forEach(dateGroup => {
+      dateGroup.details.forEach((detail, indexInDateGroup) => {
+        const row = document.createElement("tr");
 
-      const quantidadeCell = document.createElement("td");
-      quantidadeCell.textContent = detail.quantidade;
-      row.appendChild(quantidadeCell);
+        // For the first row of this name group, add the "Nome" and "Valor Total Nome" cells with rowSpan.
+        if (isFirstGroupRow) {
+          const nomeCell = document.createElement("td");
+          nomeCell.textContent = group.nome;
+          nomeCell.rowSpan = totalGroupRows;
+          row.appendChild(nomeCell);
 
-      const descontoCell = document.createElement("td");
-      descontoCell.textContent = detail.desconto;
-      row.appendChild(descontoCell);
+          const valorTotalCell = document.createElement("td");
+          valorTotalCell.textContent = group.valorTotal;
+          valorTotalCell.rowSpan = totalGroupRows;
+          row.appendChild(valorTotalCell);
 
-      const valorOriginalCell = document.createElement("td");
-      valorOriginalCell.textContent = detail.valorOriginal;
-      row.appendChild(valorOriginalCell);
+          isFirstGroupRow = false;
+        }
 
-      const valorPagoCell = document.createElement("td");
-      valorPagoCell.textContent = detail.valorPago;
-      row.appendChild(valorPagoCell);
+        // For the first row in each date group, add the date cell with rowSpan equal to the number of details in the group.
+        if (indexInDateGroup === 0) {
+          const dataCell = document.createElement("td");
+          dataCell.textContent = dateGroup.date;
+          dataCell.rowSpan = dateGroup.details.length;
+          row.appendChild(dataCell);
+        }
 
-      tbody.appendChild(row);
+        // Add remaining cells: Descrição, Quantidade, Desconto, Valor Original, Valor Pago.
+        const descricaoCell = document.createElement("td");
+        descricaoCell.textContent = detail.descricao;
+        row.appendChild(descricaoCell);
+
+        const quantidadeCell = document.createElement("td");
+        quantidadeCell.textContent = detail.quantidade;
+        row.appendChild(quantidadeCell);
+
+        const descontoCell = document.createElement("td");
+        descontoCell.textContent = detail.desconto;
+        row.appendChild(descontoCell);
+
+        const valorOriginalCell = document.createElement("td");
+        valorOriginalCell.textContent = detail.valorOriginal;
+        row.appendChild(valorOriginalCell);
+
+        const valorPagoCell = document.createElement("td");
+        valorPagoCell.textContent = detail.valorPago;
+        row.appendChild(valorPagoCell);
+
+        tbody.appendChild(row);
+      });
     });
   });
 
