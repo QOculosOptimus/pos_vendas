@@ -335,7 +335,7 @@ function renderAuxRelatorioTable(data) {
     "Valor Original"
   ];
 
-  headers.forEach((text, index) => {
+  headers.forEach((text) => {
     const th = document.createElement("th");
     th.textContent = text;
     if (text === "Extra") {
@@ -383,6 +383,23 @@ function renderAuxRelatorioTable(data) {
             const nomeCell = document.createElement("td");
             nomeCell.textContent = group.nome;
             nomeCell.rowSpan = totalGroupRows;
+            nomeCell.style.cursor = "pointer";
+            // When the nome cell is clicked, display the celular info temporarily.
+            nomeCell.addEventListener("click", function(e) {
+              const tooltip = document.createElement("div");
+              tooltip.textContent = "Celular: " + group.celular;
+              tooltip.style.position = "absolute";
+              tooltip.style.backgroundColor = "#f9f9f9";
+              tooltip.style.border = "1px solid #ccc";
+              tooltip.style.padding = "5px";
+              tooltip.style.zIndex = 1000;
+              tooltip.style.left = e.pageX + "px";
+              tooltip.style.top = e.pageY + "px";
+              document.body.appendChild(tooltip);
+              setTimeout(function() {
+                tooltip.remove();
+              }, 2000); // Remove after 2 seconds
+            });
             row.appendChild(nomeCell);
 
             const valorTotalCell = document.createElement("td");

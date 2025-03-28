@@ -570,9 +570,15 @@ function fetchAuxRelatorio() {
     // Use the value from Column K (index 10) for valorPago
     const valorPago = parseFloat(row[10]) || 0;
 
-    // Initialize group if needed, including a set to track extras.
+    // Initialize group if needed, including celular from Column R (index 17)
     if (!groups[nome]) {
-      groups[nome] = { nome: nome, valorTotal: 0, dias: [], extrasSet: {} };
+      groups[nome] = {
+        nome: nome,
+        valorTotal: 0,
+        dias: [],
+        extrasSet: {},
+        celular: row[17]  // Added celular information
+      };
     }
     
     // Increase valorTotal only if this extra value hasn't been seen yet.
