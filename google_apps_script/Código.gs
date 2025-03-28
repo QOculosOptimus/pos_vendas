@@ -564,14 +564,22 @@ function fetchAuxRelatorio() {
     const nome = row[14]; // Column O (index 14)
     if (!nome) return;
 
+    // Extract the extra value from Column G (index 6)
+    const extraValue = row[6];
+
     // Use the value from Column K (index 10) for valorPago
     const valorPago = parseFloat(row[10]) || 0;
 
-    // Sum valorPago into group total.
+    // Initialize group if needed, including a set to track extras.
     if (!groups[nome]) {
-      groups[nome] = { nome: nome, valorTotal: 0, dias: [] };
+      groups[nome] = { nome: nome, valorTotal: 0, dias: [], extrasSet: {} };
     }
-    groups[nome].valorTotal += valorPago;
+    
+    // Increase valorTotal only if this extra value hasn't been seen yet.
+    if (!groups[nome].extrasSet[extraValue]) {
+      groups[nome].valorTotal += valorPago;
+      groups[nome].extrasSet[extraValue] = true;
+    }
 
     // Format the date from Column S (index 18)
     let dataValue = row[18];
@@ -581,8 +589,8 @@ function fetchAuxRelatorio() {
 
     // Create a new compra object from this row.
     const compra = {
-      extra: row[6],         // Column G (index 6)
-      valorPago: valorPago,  // Column K (index 10)
+      extra: extraValue,
+      valorPago: valorPago,
       itens: [{
         descricao: row[12],      // Column M (index 12)
         quantidade: row[7],      // Column H (index 7)
@@ -598,9 +606,13 @@ function fetchAuxRelatorio() {
       groups[nome].dias.push(diaObj);
     }
 
-    // You could merge compras with same "extra" here if needed.
-    // For now, each row creates a new compra.
+    // Append the compra to the dia.
     diaObj.compras.push(compra);
+  });
+
+  // Remove the extrasSet property before returning.
+  Object.values(groups).forEach(group => {
+    delete group.extrasSet;
   });
 
   return { data: Object.values(groups) };
