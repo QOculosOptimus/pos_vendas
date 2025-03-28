@@ -189,7 +189,7 @@ function fetchSalesOrders() {
 	console.log('startRow:', startRow);
 	vendasSheet.getRange(startRow, 1, dataRows.length, headers.length).setValues(dataRows);
     }
-
+    Utilities.sleep(2000);
     return true;
 }
 
@@ -349,6 +349,7 @@ function fetchItemsOrders() {
             continue;
         }
     }
+    Utilities.sleep(2000);
 }
 
 function fetchProducts() {
