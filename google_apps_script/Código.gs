@@ -422,3 +422,174 @@ function fetchProducts() {
     return jsonResponse;
 }
 
+function fetchContacts() {
+  console.log("Fetching contacts");
+  // Open the spreadsheet and get the access token
+  const spreadsheet = SpreadsheetApp.openById(sheetId);
+  const authSheet = spreadsheet.getSheetByName(authSheetName);
+  const accessToken = authSheet.getRange("B6").getValue();
+
+  // Get the 'vendas' sheet and its data
+  const vendasSheet = spreadsheet.getSheetByName(vendasSheetName);
+  const vendasData = vendasSheet.getDataRange().getValues();
+  if (vendasData.length < 2) {
+    console.log("No vendas data found");
+    return;
+  }
+  const vendasHeaders = vendasData[0];
+  const contatoDocumentoIndex = vendasHeaders.indexOf("Contato ID");
+  if (contatoDocumentoIndex === -1) {
+    console.log("Contato ID column not found in vendas sheet");
+    return;
+  }
+  console.log("Found 'Contato ID' column at index " + contatoDocumentoIndex + " of the vendas sheet");
+  // Gather unique contact parameters from 'vendas'
+  let contactsToFetch = new Set();
+  for (let i = 1; i < vendasData.length; i++) {
+    const contatoDocumento = vendasData[i][contatoDocumentoIndex];
+    if (contatoDocumento && contatoDocumento !== "") {
+      contactsToFetch.add(contatoDocumento.toString());
+    }
+  }
+  console.log("Found " + contactsToFetch.size + " unique contacts to fetch");
+  // Get (or create) the 'contatos' sheet
+  let contatosSheet = spreadsheet.getSheetByName("contatos");
+  if (!contatosSheet) {
+    contatosSheet = spreadsheet.insertSheet("contatos");
+  }
+
+  // Read existing contacts (using "ID" as unique key)
+  const contatosData = contatosSheet.getDataRange().getValues();
+  let existingContacts = new Set();
+  let headerRow = [];
+  if (contatosData.length > 0) {
+    headerRow = contatosData[0];
+    const numeroDocumentoIndex = headerRow.indexOf("ID");
+    if (numeroDocumentoIndex !== -1) {
+      for (let i = 1; i < contatosData.length; i++) {
+        const numeroDocumento = contatosData[i][numeroDocumentoIndex];
+        if (numeroDocumento && numeroDocumento !== "") {
+          existingContacts.add(numeroDocumento.toString());
+        }
+      }
+    }
+  }
+
+  // Write header row if the sheet is empty
+  if (contatosData.length === 0) {
+    headerRow = [
+      "ID", "Nome", "Código", "Situação", "Número Documento", "Telefone", 
+      "Celular", "Tipo", "Data Nascimento", "Endereço", "Número", 
+      "Complemento", "Bairro", "CEP", "Município", "UF"
+    ];
+    contatosSheet.appendRow(headerRow);
+  }
+
+  contactsToFetchNotProcessed = new Set();
+  contactsToFetch.forEach(function(contactParam) {
+    if (!existingContacts.has(contactParam)) {
+      contactsToFetchNotProcessed.add(contactParam);
+    }
+  });
+
+  console.log("Found " + contactsToFetchNotProcessed.size + " unique contacts to fetch and not processed");
+
+  // For each unique contact from vendas, fetch and write if not already processed
+  contactsToFetchNotProcessed.forEach(function(contactParam) {
+    if (existingContacts.has(contactParam)) {
+      console.log("Contact " + contactParam + " already fetched, skipping.");
+      return;
+    }
+    const url = "https://developer.bling.com.br/api/bling/contatos/" + contactParam;
+    try {
+      const response = UrlFetchApp.fetch(url, {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + accessToken,
+          "accept": "application/json"
+        },
+	muteHttpExceptions: true
+      });
+      const jsonResponse = JSON.parse(response.getContentText());
+      if (!jsonResponse.data) {
+        console.log("No data for contact " + contactParam);
+        return;
+      }
+      const data = jsonResponse.data;
+      const row = [
+        data.id,
+        data.nome,
+        data.codigo,
+        data.situacao,
+        data.numeroDocumento,
+        data.telefone,
+        data.celular,
+        data.tipo,
+        data.dadosAdicionais ? data.dadosAdicionais.dataNascimento : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.endereco : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.numero : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.complemento : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.bairro : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.cep : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.municipio : "",
+        data.endereco && data.endereco.geral ? data.endereco.geral.uf : ""
+      ];
+      // Write the row immediately so that each fetched contact is added on the fly
+      contatosSheet.appendRow(row);
+      // Pause briefly to avoid hitting rate limits
+      Utilities.sleep(1000);
+    } catch (error) {
+      console.log("Error fetching contact " + contactParam + ": " + error);
+    }
+  });
+}
+function fetchAuxRelatorio() {
+  const spreadsheet = SpreadsheetApp.openById(sheetId);
+  const sheet = spreadsheet.getSheetByName("AuxRelatório");
+  const dataRange = sheet.getDataRange();
+  const data = dataRange.getValues();
+
+  if (data.length < 2) { // No data rows
+    return { data: [] };
+  }
+
+  // Assuming the first row contains headers
+  const rows = data.slice(1);
+  const groups = {};
+
+  rows.forEach(row => {
+    const nome = row[12];  // Column M (index 12 when columns start at 0)
+    if (!nome) return; // Skip empty names
+
+    const valor = parseFloat(row[9]) || 0; // Column J (index 9)
+
+    if (!groups[nome]) {
+      groups[nome] = { nome: nome, valorTotal: 0, details: [] };
+    }
+
+    groups[nome].valorTotal += valor;
+
+    // Convert column Q (Data) to string if its a Date object
+    let dataValue = row[16];
+    if (dataValue instanceof Date) {
+      dataValue = Utilities.formatDate(dataValue, Session.getScriptTimeZone(), "yyyy-MM-dd");
+    }
+
+    groups[nome].details.push({
+      data: dataValue,      // Column Q (index 16)
+      descricao: row[10],   // Column K (index 10)
+      quantidade: row[7],   // Column H (index 7)
+      desconto: row[8],     // Column I (index 8)
+      valor: row[9]         // Column J (index 9)
+    });
+  });
+
+  // Convert grouped object to an array
+  const result = [];
+  for (let key in groups) {
+    result.push(groups[key]);
+  }
+
+  return { data: result };
+}
+
