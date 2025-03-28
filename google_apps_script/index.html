@@ -266,105 +266,113 @@
 	    }
 	  }).checkTokenExpiration();
 	}
-// New function: Render the AuxRelatório grouped table
-  function renderAuxRelatorioTable(data) {
-      const container = document.getElementById('auxRelatorioResponse');
-      container.innerHTML = "";
-      
-      // print the data
-      console.log(data);
-      
-      if (!data || !data.data || data.data.length === 0) {
-          container.textContent = "No data found.";
-          return;
-      }
-      
-      // Create collapsible container similar to your other tables
-      const collapsible = document.createElement("div");
-      collapsible.className = "collapsible";
-      
-      const header = document.createElement("div");
-      header.className = "collapsible-header";
-      header.textContent = "Aux Relatório";
-      
-      const toggleIcon = document.createElement("span");
-      toggleIcon.className = "toggle-icon";
-      toggleIcon.innerHTML = "&#9654;";
-      header.appendChild(toggleIcon);
-      
-      const content = document.createElement("div");
-      content.className = "collapsible-content";
-      
-      collapsible.appendChild(header);
-      collapsible.appendChild(content);
-      container.appendChild(collapsible);
-      
-      header.addEventListener("click", function() {
-          collapsible.classList.toggle("active");
-          toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;";
-      });
-      
-      // Create table with headers
-      const table = document.createElement("table");
-      const thead = document.createElement("thead");
-      const headerRow = document.createElement("tr");
-      const headers = ["Nome", "Valor Total Nome", "Data", "Descrição", "Quantidade", "Desconto", "Valor"];
-      headers.forEach(text => {
-          const th = document.createElement("th");
-          th.textContent = text;
-          headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-      
-      // Create table body with grouped rows
-      const tbody = document.createElement("tbody");
-      data.data.forEach(group => {
-          const details = group.details;
-          details.forEach((detail, index) => {
-              const row = document.createElement("tr");
-              
-              // For the first row in the group, add the grouped cells with rowspan
-              if (index === 0) {
-                  const nomeCell = document.createElement("td");
-                  nomeCell.textContent = group.nome;
-                  nomeCell.rowSpan = details.length;
-                  row.appendChild(nomeCell);
-                  
-                  const valorTotalCell = document.createElement("td");
-                  valorTotalCell.textContent = group.valorTotal;
-                  valorTotalCell.rowSpan = details.length;
-                  row.appendChild(valorTotalCell);
-              }
-              
-              // Now add the details cells
-              const dataCell = document.createElement("td");
-              dataCell.textContent = detail.data;
-              row.appendChild(dataCell);
-              
-              const descricaoCell = document.createElement("td");
-              descricaoCell.textContent = detail.descricao;
-              row.appendChild(descricaoCell);
-              
-              const quantidadeCell = document.createElement("td");
-              quantidadeCell.textContent = detail.quantidade;
-              row.appendChild(quantidadeCell);
-              
-              const descontoCell = document.createElement("td");
-              descontoCell.textContent = detail.desconto;
-              row.appendChild(descontoCell);
-              
-              const valorCell = document.createElement("td");
-              valorCell.textContent = detail.valor;
-              row.appendChild(valorCell);
-              
-              tbody.appendChild(row);
-          });
-      });
-      
-      table.appendChild(tbody);
-      content.appendChild(table);
+
+function renderAuxRelatorioTable(data) {
+  const container = document.getElementById('auxRelatorioResponse');
+  container.innerHTML = "";
+
+  if (!data || !data.data || data.data.length === 0) {
+    container.textContent = "No data found.";
+    return;
   }
+
+  const collapsible = document.createElement("div");
+  collapsible.className = "collapsible";
+
+  const header = document.createElement("div");
+  header.className = "collapsible-header";
+  header.textContent = "Aux Relatório";
+
+  const toggleIcon = document.createElement("span");
+  toggleIcon.className = "toggle-icon";
+  toggleIcon.innerHTML = "&#9654;";
+  header.appendChild(toggleIcon);
+
+  const content = document.createElement("div");
+  content.className = "collapsible-content";
+
+  collapsible.appendChild(header);
+  collapsible.appendChild(content);
+  container.appendChild(collapsible);
+
+  header.addEventListener("click", function () {
+    collapsible.classList.toggle("active");
+    toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;";
+  });
+
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+
+  const headers = [
+    "Nome",
+    "Valor Total Nome",
+    "Data",
+    "Descrição",
+    "Quantidade",
+    "Desconto",
+    "Valor Original",
+    "Valor Pago"
+  ];
+
+  headers.forEach(text => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  data.data.forEach(group => {
+    const details = group.details;
+    details.forEach((detail, index) => {
+      const row = document.createElement("tr");
+
+      if (index === 0) {
+        const nomeCell = document.createElement("td");
+        nomeCell.textContent = group.nome;
+        nomeCell.rowSpan = details.length;
+        row.appendChild(nomeCell);
+
+        const valorTotalCell = document.createElement("td");
+        valorTotalCell.textContent = group.valorTotal;
+        valorTotalCell.rowSpan = details.length;
+        row.appendChild(valorTotalCell);
+      }
+
+      const dataCell = document.createElement("td");
+      dataCell.textContent = detail.data;
+      row.appendChild(dataCell);
+
+      const descricaoCell = document.createElement("td");
+      descricaoCell.textContent = detail.descricao;
+      row.appendChild(descricaoCell);
+
+      const quantidadeCell = document.createElement("td");
+      quantidadeCell.textContent = detail.quantidade;
+      row.appendChild(quantidadeCell);
+
+      const descontoCell = document.createElement("td");
+      descontoCell.textContent = detail.desconto;
+      row.appendChild(descontoCell);
+
+      const valorOriginalCell = document.createElement("td");
+      valorOriginalCell.textContent = detail.valorOriginal;
+      row.appendChild(valorOriginalCell);
+
+      const valorPagoCell = document.createElement("td");
+      valorPagoCell.textContent = detail.valorPago;
+      row.appendChild(valorPagoCell);
+
+      tbody.appendChild(row);
+    });
+  });
+
+  table.appendChild(tbody);
+  content.appendChild(table);
+}
 
   // New function to call the server-side function and render the table
   function fetchAuxRelatorioData() {
