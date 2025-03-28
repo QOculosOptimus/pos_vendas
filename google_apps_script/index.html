@@ -267,6 +267,11 @@
 	  }).checkTokenExpiration();
 	}
 
+function formatNumber(value) {
+  const number = parseFloat(value) || 0;
+  return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function renderAuxRelatorioTable(data) {
   const container = document.getElementById('auxRelatorioResponse');
   container.innerHTML = "";
@@ -340,16 +345,13 @@ function renderAuxRelatorioTable(data) {
 
   data.data.forEach(group => {
     // Sort details by date descending.
-    // Assuming detail.data is in a format recognized by Date (ISO, etc.)
     const sortedDetails = group.details.slice().sort((a, b) => {
       return new Date(b.data) - new Date(a.data);
     });
 
     // Group details by date.
-    // We assume that sortedDetails are already ordered by date.
     const detailsByDate = [];
     let currentDateGroup = null;
-
     sortedDetails.forEach(detail => {
       if (!currentDateGroup || currentDateGroup.date !== detail.data) {
         currentDateGroup = { date: detail.data, details: [] };
@@ -358,15 +360,14 @@ function renderAuxRelatorioTable(data) {
       currentDateGroup.details.push(detail);
     });
 
-    // Total number of rows for the group will be the sum of rows from all date groups.
     const totalGroupRows = sortedDetails.length;
-    let isFirstGroupRow = true; // To render "Nome" and "Valor Total Nome" only once
+    let isFirstGroupRow = true;
 
     detailsByDate.forEach(dateGroup => {
       dateGroup.details.forEach((detail, indexInDateGroup) => {
         const row = document.createElement("tr");
 
-        // For the first row of this name group, add the "Nome" and "Valor Total Nome" cells with rowSpan.
+        // Render "Nome" and "Valor Total Nome" only once per group.
         if (isFirstGroupRow) {
           const nomeCell = document.createElement("td");
           nomeCell.textContent = group.nome;
@@ -374,14 +375,15 @@ function renderAuxRelatorioTable(data) {
           row.appendChild(nomeCell);
 
           const valorTotalCell = document.createElement("td");
-          valorTotalCell.textContent = group.valorTotal;
+          // Format the Valor Total Nome column.
+          valorTotalCell.textContent = formatNumber(group.valorTotal);
           valorTotalCell.rowSpan = totalGroupRows;
           row.appendChild(valorTotalCell);
 
           isFirstGroupRow = false;
         }
 
-        // For the first row in each date group, add the date cell with rowSpan equal to the number of details in the group.
+        // Render date cell only once per date group.
         if (indexInDateGroup === 0) {
           const dataCell = document.createElement("td");
           dataCell.textContent = dateGroup.date;
@@ -389,7 +391,7 @@ function renderAuxRelatorioTable(data) {
           row.appendChild(dataCell);
         }
 
-        // Add remaining cells: Descrição, Quantidade, Desconto, Valor Original, Valor Pago.
+        // Render the remaining cells.
         const descricaoCell = document.createElement("td");
         descricaoCell.textContent = detail.descricao;
         row.appendChild(descricaoCell);
@@ -403,11 +405,13 @@ function renderAuxRelatorioTable(data) {
         row.appendChild(descontoCell);
 
         const valorOriginalCell = document.createElement("td");
-        valorOriginalCell.textContent = detail.valorOriginal;
+        // Format Valor Original.
+        valorOriginalCell.textContent = formatNumber(detail.valorOriginal);
         row.appendChild(valorOriginalCell);
 
         const valorPagoCell = document.createElement("td");
-        valorPagoCell.textContent = detail.valorPago;
+        // Format Valor Pago.
+        valorPagoCell.textContent = formatNumber(detail.valorPago);
         row.appendChild(valorPagoCell);
 
         tbody.appendChild(row);
