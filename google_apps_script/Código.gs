@@ -543,23 +543,23 @@ function fetchContacts() {
     }
   });
 }
+
 function fetchAuxRelatorio() {
   const spreadsheet = SpreadsheetApp.openById(sheetId);
   const sheet = spreadsheet.getSheetByName("AuxRelatório");
   const dataRange = sheet.getDataRange();
   const data = dataRange.getValues();
 
-  if (data.length < 2) { // No data rows
+  if (data.length < 2) {
     return { data: [] };
   }
 
-  // Assuming the first row contains headers
   const rows = data.slice(1);
   const groups = {};
 
   rows.forEach(row => {
-    const nome = row[12];  // Column M (index 12 when columns start at 0)
-    if (!nome) return; // Skip empty names
+    const nome = row[14];  // Column O (index 14)
+    if (!nome) return;
 
     const valor = parseFloat(row[9]) || 0; // Column J (index 9)
 
@@ -569,27 +569,21 @@ function fetchAuxRelatorio() {
 
     groups[nome].valorTotal += valor;
 
-    // Convert column Q (Data) to string if its a Date object
-    let dataValue = row[16];
+    // Convert column S (Data) to string if its a Date object
+    let dataValue = row[18]; // Column S (index 18)
     if (dataValue instanceof Date) {
       dataValue = Utilities.formatDate(dataValue, Session.getScriptTimeZone(), "yyyy-MM-dd");
     }
 
     groups[nome].details.push({
-      data: dataValue,      // Column Q (index 16)
-      descricao: row[10],   // Column K (index 10)
+      data: dataValue,      // Column S (index 18)
+      descricao: row[12],   // Column M (index 12)
       quantidade: row[7],   // Column H (index 7)
       desconto: row[8],     // Column I (index 8)
       valor: row[9]         // Column J (index 9)
     });
   });
 
-  // Convert grouped object to an array
-  const result = [];
-  for (let key in groups) {
-    result.push(groups[key]);
-  }
-
-  return { data: result };
+  return { data: Object.values(groups) };
 }
 
