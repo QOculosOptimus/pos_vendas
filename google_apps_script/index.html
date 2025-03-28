@@ -281,7 +281,7 @@ function renderAuxRelatorioTable(data) {
     return;
   }
 
-  // Sort the groups:
+  // Sort groups by descending valorTotal, then alphabetically by nome.
   data.data.sort((a, b) => {
     const valorA = parseFloat(a.valorTotal) || 0;
     const valorB = parseFloat(b.valorTotal) || 0;
@@ -319,16 +319,17 @@ function renderAuxRelatorioTable(data) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
+  // New header order:
   const headers = [
     "Nome",
     "Valor Total Nome",
     "Data",
-    "Extra",          // New: header for the value from Column G
+    "Extra",
+    "Valor Pago",
     "Descrição",
     "Quantidade",
     "Desconto",
-    "Valor Original",
-    "Valor Pago"
+    "Valor Original"
   ];
 
   headers.forEach(text => {
@@ -336,87 +337,94 @@ function renderAuxRelatorioTable(data) {
     th.textContent = text;
     headerRow.appendChild(th);
   });
-
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
 
+  // For each group, we need to compute how many table rows will be rendered.
   data.data.forEach(group => {
-    // Sort details by date descending.
-    const sortedDetails = group.details.slice().sort((a, b) => {
-      return new Date(b.data) - new Date(a.data);
+    let totalGroupRows = 0;
+    group.dias.forEach(dia => {
+      dia.compras.forEach(compra => {
+        totalGroupRows += compra.itens.length;
+      });
     });
 
-    // Group details by date.
-    const detailsByDate = [];
-    let currentDateGroup = null;
-    sortedDetails.forEach(detail => {
-      if (!currentDateGroup || currentDateGroup.date !== detail.data) {
-        currentDateGroup = { date: detail.data, details: [] };
-        detailsByDate.push(currentDateGroup);
-      }
-      currentDateGroup.details.push(detail);
-    });
+    let firstGroupRow = true;
+    // Iterate over each day.
+    group.dias.forEach(dia => {
+      // Compute total rows for this day.
+      let totalDayRows = 0;
+      dia.compras.forEach(compra => {
+        totalDayRows += compra.itens.length;
+      });
+      let firstDayRow = true;
+      // Iterate over each compra within the day.
+      dia.compras.forEach(compra => {
+        const totalCompraRows = compra.itens.length;
+        let firstCompraRow = true;
+        // Iterate over each item.
+        compra.itens.forEach(item => {
+          const row = document.createElement("tr");
 
-    const totalGroupRows = sortedDetails.length;
-    let isFirstGroupRow = true;
+          // Group-level cells: show only once per group.
+          if (firstGroupRow) {
+            const nomeCell = document.createElement("td");
+            nomeCell.textContent = group.nome;
+            nomeCell.rowSpan = totalGroupRows;
+            row.appendChild(nomeCell);
 
-    detailsByDate.forEach(dateGroup => {
-      dateGroup.details.forEach((detail, indexInDateGroup) => {
-        const row = document.createElement("tr");
+            const valorTotalCell = document.createElement("td");
+            valorTotalCell.textContent = formatNumber(group.valorTotal);
+            valorTotalCell.rowSpan = totalGroupRows;
+            row.appendChild(valorTotalCell);
+            firstGroupRow = false;
+          }
 
-        // Render "Nome" and "Valor Total Nome" only once per group.
-        if (isFirstGroupRow) {
-          const nomeCell = document.createElement("td");
-          nomeCell.textContent = group.nome;
-          nomeCell.rowSpan = totalGroupRows;
-          row.appendChild(nomeCell);
+          // Dia-level cell: show only once per day.
+          if (firstDayRow) {
+            const dataCell = document.createElement("td");
+            dataCell.textContent = dia.data;
+            dataCell.rowSpan = totalDayRows;
+            dataCell.style.whiteSpace = "nowrap";
+            row.appendChild(dataCell);
+            firstDayRow = false;
+          }
 
-          const valorTotalCell = document.createElement("td");
-          valorTotalCell.textContent = formatNumber(group.valorTotal);
-          valorTotalCell.rowSpan = totalGroupRows;
-          row.appendChild(valorTotalCell);
+          // Compra-level cells: show only once per compra.
+          if (firstCompraRow) {
+            const extraCell = document.createElement("td");
+            extraCell.textContent = compra.extra;
+            extraCell.rowSpan = totalCompraRows;
+            row.appendChild(extraCell);
 
-          isFirstGroupRow = false;
-        }
+            const valorPagoCell = document.createElement("td");
+            valorPagoCell.textContent = formatNumber(compra.valorPago);
+            valorPagoCell.rowSpan = totalCompraRows;
+            row.appendChild(valorPagoCell);
+            firstCompraRow = false;
+          }
 
-        // Render date cell only once per date group.
-        if (indexInDateGroup === 0) {
-          const dataCell = document.createElement("td");
-          dataCell.textContent = dateGroup.date;
-          dataCell.rowSpan = dateGroup.details.length;
-          dataCell.style.whiteSpace = "nowrap";
-          row.appendChild(dataCell);
-        }
+          // Now render the item details.
+          const descricaoCell = document.createElement("td");
+          descricaoCell.textContent = item.descricao;
+          row.appendChild(descricaoCell);
 
-        // Render the new "Extra" column.
-        const extraCell = document.createElement("td");
-        extraCell.textContent = detail.extra;
-        row.appendChild(extraCell);
+          const quantidadeCell = document.createElement("td");
+          quantidadeCell.textContent = item.quantidade;
+          row.appendChild(quantidadeCell);
 
-        // Render the remaining cells.
-        const descricaoCell = document.createElement("td");
-        descricaoCell.textContent = detail.descricao;
-        row.appendChild(descricaoCell);
+          const descontoCell = document.createElement("td");
+          descontoCell.textContent = item.desconto;
+          row.appendChild(descontoCell);
 
-        const quantidadeCell = document.createElement("td");
-        quantidadeCell.textContent = detail.quantidade;
-        row.appendChild(quantidadeCell);
+          const valorOriginalCell = document.createElement("td");
+          valorOriginalCell.textContent = formatNumber(item.valorOriginal);
+          row.appendChild(valorOriginalCell);
 
-        const descontoCell = document.createElement("td");
-        descontoCell.textContent = detail.desconto;
-        row.appendChild(descontoCell);
-
-        const valorOriginalCell = document.createElement("td");
-        valorOriginalCell.textContent = formatNumber(detail.valorOriginal);
-        row.appendChild(valorOriginalCell);
-
-        const valorPagoCell = document.createElement("td");
-        valorPagoCell.textContent = formatNumber(detail.valorPago);
-        row.appendChild(valorPagoCell);
-
-        tbody.appendChild(row);
+          tbody.appendChild(row);
+        });
       });
     });
   });

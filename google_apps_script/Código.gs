@@ -558,34 +558,49 @@ function fetchAuxRelatorio() {
   const groups = {};
 
   rows.forEach(row => {
-    if (row[11] !== 1) return; // Column L (index 11) must be exactly 1
+    // Check condition: Column L (index 11) must be exactly 1
+    if (row[11] !== 1) return;
 
-    const nome = row[14];  // Column O (index 14)
+    const nome = row[14]; // Column O (index 14)
     if (!nome) return;
 
-    const valorPago = parseFloat(row[10]) || 0;  // Column K (index 10)
-    const valorOriginal = parseFloat(row[11]) || 0; // Column L (index 11)
+    // Use the value from Column K (index 10) for valorPago
+    const valorPago = parseFloat(row[10]) || 0;
 
+    // Sum valorPago into group total.
     if (!groups[nome]) {
-      groups[nome] = { nome: nome, valorTotal: 0, details: [] };
+      groups[nome] = { nome: nome, valorTotal: 0, dias: [] };
     }
-
     groups[nome].valorTotal += valorPago;
 
-    let dataValue = row[18]; // Column S (index 18)
+    // Format the date from Column S (index 18)
+    let dataValue = row[18];
     if (dataValue instanceof Date) {
       dataValue = Utilities.formatDate(dataValue, Session.getScriptTimeZone(), "yyyy-MM-dd");
     }
 
-    groups[nome].details.push({
-      data: dataValue,
-      extra: row[6],           // New: value from Column G (index 6)
-      descricao: row[12],      // Column M (index 12)
-      quantidade: row[7],      // Column H (index 7)
-      desconto: row[8],        // Column I (index 8)
-      valorOriginal: row[9],   // Column J (index 9)
-      valorPago: row[10]       // Column K (index 10)
-    });
+    // Create a new compra object from this row.
+    const compra = {
+      extra: row[6],         // Column G (index 6)
+      valorPago: valorPago,  // Column K (index 10)
+      itens: [{
+        descricao: row[12],      // Column M (index 12)
+        quantidade: row[7],      // Column H (index 7)
+        desconto: row[8],        // Column I (index 8)
+        valorOriginal: row[9]    // Column J (index 9)
+      }]
+    };
+
+    // Check if there is already a day object for this date.
+    let diaObj = groups[nome].dias.find(dia => dia.data === dataValue);
+    if (!diaObj) {
+      diaObj = { data: dataValue, compras: [] };
+      groups[nome].dias.push(diaObj);
+    }
+
+    // You could merge compras with same "extra" here if needed.
+    // For now, each row creates a new compra.
+    diaObj.compras.push(compra);
   });
 
   return { data: Object.values(groups) };
