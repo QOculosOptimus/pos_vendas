@@ -558,6 +558,8 @@ function fetchAuxRelatorio() {
   const groups = {};
 
   rows.forEach(row => {
+    if (row[11] !== 1) return; // Column L (index 11) must be exactly 1
+
     const nome = row[14];  // Column O (index 14)
     if (!nome) return;
 
@@ -569,14 +571,13 @@ function fetchAuxRelatorio() {
 
     groups[nome].valorTotal += valor;
 
-    // Convert column S (Data) to string if its a Date object
     let dataValue = row[18]; // Column S (index 18)
     if (dataValue instanceof Date) {
       dataValue = Utilities.formatDate(dataValue, Session.getScriptTimeZone(), "yyyy-MM-dd");
     }
 
     groups[nome].details.push({
-      data: dataValue,      // Column S (index 18)
+      data: dataValue,
       descricao: row[12],   // Column M (index 12)
       quantidade: row[7],   // Column H (index 7)
       desconto: row[8],     // Column I (index 8)
