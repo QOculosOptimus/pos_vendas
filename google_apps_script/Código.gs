@@ -417,7 +417,7 @@ function fetchProducts() {
         // Determine the range to insert data
         produtosSheet.getRange(2, 1, dataRows.length, headers.length).setValues(dataRows);
     }
-
+    Utilities.sleep(2000);
     // Return the parsed JSON response
     return jsonResponse;
 }
