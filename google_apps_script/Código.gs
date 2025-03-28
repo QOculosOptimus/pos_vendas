@@ -563,8 +563,8 @@ function fetchAuxRelatorio() {
     const nome = row[14];  // Column O (index 14)
     if (!nome) return;
 
-    const valorPago = parseFloat(row[10]) || 0;  // Column J (index 9)
-    const valorOriginal = parseFloat(row[11]) || 0; // Column L (index 11) – if needed for other purposes
+    const valorPago = parseFloat(row[10]) || 0;  // Column K (index 10)
+    const valorOriginal = parseFloat(row[11]) || 0; // Column L (index 11)
 
     if (!groups[nome]) {
       groups[nome] = { nome: nome, valorTotal: 0, details: [] };
@@ -579,11 +579,12 @@ function fetchAuxRelatorio() {
 
     groups[nome].details.push({
       data: dataValue,
-      descricao: row[12],       // Column M (index 12)
-      quantidade: row[7],       // Column H (index 7)
-      desconto: row[8],         // Column I (index 8)
-      valorOriginal: row[9],   // Column L (index 11)
-      valorPago: row[10]         // Column J (index 9)
+      extra: row[6],           // New: value from Column G (index 6)
+      descricao: row[12],      // Column M (index 12)
+      quantidade: row[7],      // Column H (index 7)
+      desconto: row[8],        // Column I (index 8)
+      valorOriginal: row[9],   // Column J (index 9)
+      valorPago: row[10]       // Column K (index 10)
     });
   });
 

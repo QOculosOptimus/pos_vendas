@@ -282,8 +282,6 @@ function renderAuxRelatorioTable(data) {
   }
 
   // Sort the groups:
-  // - First, descending by 'valorTotal' (assumed numeric)
-  // - Then, if equal, alphabetically by 'nome'
   data.data.sort((a, b) => {
     const valorA = parseFloat(a.valorTotal) || 0;
     const valorB = parseFloat(b.valorTotal) || 0;
@@ -325,6 +323,7 @@ function renderAuxRelatorioTable(data) {
     "Nome",
     "Valor Total Nome",
     "Data",
+    "Extra",          // New: header for the value from Column G
     "Descrição",
     "Quantidade",
     "Desconto",
@@ -375,7 +374,6 @@ function renderAuxRelatorioTable(data) {
           row.appendChild(nomeCell);
 
           const valorTotalCell = document.createElement("td");
-          // Format the Valor Total Nome column.
           valorTotalCell.textContent = formatNumber(group.valorTotal);
           valorTotalCell.rowSpan = totalGroupRows;
           row.appendChild(valorTotalCell);
@@ -388,8 +386,14 @@ function renderAuxRelatorioTable(data) {
           const dataCell = document.createElement("td");
           dataCell.textContent = dateGroup.date;
           dataCell.rowSpan = dateGroup.details.length;
+          dataCell.style.whiteSpace = "nowrap";
           row.appendChild(dataCell);
         }
+
+        // Render the new "Extra" column.
+        const extraCell = document.createElement("td");
+        extraCell.textContent = detail.extra;
+        row.appendChild(extraCell);
 
         // Render the remaining cells.
         const descricaoCell = document.createElement("td");
@@ -405,12 +409,10 @@ function renderAuxRelatorioTable(data) {
         row.appendChild(descontoCell);
 
         const valorOriginalCell = document.createElement("td");
-        // Format Valor Original.
         valorOriginalCell.textContent = formatNumber(detail.valorOriginal);
         row.appendChild(valorOriginalCell);
 
         const valorPagoCell = document.createElement("td");
-        // Format Valor Pago.
         valorPagoCell.textContent = formatNumber(detail.valorPago);
         row.appendChild(valorPagoCell);
 
