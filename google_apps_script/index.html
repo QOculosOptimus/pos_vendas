@@ -76,6 +76,10 @@
         .collapsible.active .toggle-icon {
             transform: rotate(90deg);
         }
+	/* Hide column */
+	.hidden {
+	  display: none;
+	}
     </style>
     <script>
         function getValue(obj, path) {
@@ -281,7 +285,7 @@ function renderAuxRelatorioTable(data) {
     return;
   }
 
-  // Sort groups by descending valorTotal, then alphabetically by nome.
+  // Sort groups
   data.data.sort((a, b) => {
     const valorA = parseFloat(a.valorTotal) || 0;
     const valorB = parseFloat(b.valorTotal) || 0;
@@ -319,7 +323,6 @@ function renderAuxRelatorioTable(data) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  // New header order:
   const headers = [
     "Nome",
     "Valor Total Nome",
@@ -332,9 +335,12 @@ function renderAuxRelatorioTable(data) {
     "Valor Original"
   ];
 
-  headers.forEach(text => {
+  headers.forEach((text, index) => {
     const th = document.createElement("th");
     th.textContent = text;
+    if (text === "Extra") {
+      th.className = "hidden";
+    }
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -342,7 +348,6 @@ function renderAuxRelatorioTable(data) {
 
   const tbody = document.createElement("tbody");
 
-  // For each group, we need to compute how many table rows will be rendered.
   data.data.forEach(group => {
     let totalGroupRows = 0;
     group.dias.forEach(dia => {
@@ -352,103 +357,90 @@ function renderAuxRelatorioTable(data) {
     });
 
     let firstGroupRow = true;
-    // Iterate over each day.
+
     group.dias.forEach(dia => {
-// Compute total rows for this day.
-let totalDayRows = 0;
-dia.compras.forEach(compra => {
-  totalDayRows += compra.itens.length;
-});
-let firstDayRow = true;
+      let totalDayRows = 0;
+      dia.compras.forEach(compra => {
+        totalDayRows += compra.itens.length;
+      });
+      let firstDayRow = true;
 
-// Use a for-loop with index so we can compare with previous compra.
-let lastExtra = null;
-let lastValorPago = null;
-let lastExtraCell = null;
-let lastValorPagoCell = null;
+      let lastExtra = null;
+      let lastValorPago = null;
+      let lastExtraCell = null;
+      let lastValorPagoCell = null;
 
-for (let compraIndex = 0; compraIndex < dia.compras.length; compraIndex++) {
-  const compra = dia.compras[compraIndex];
-  const totalCompraRows = compra.itens.length;
-  
-  // Determine if we should merge with previous compra (if extra and valorPago are identical).
-  let isMerged = (compra.extra === lastExtra && compra.valorPago === lastValorPago);
+      for (let compraIndex = 0; compraIndex < dia.compras.length; compraIndex++) {
+        const compra = dia.compras[compraIndex];
+        const totalCompraRows = compra.itens.length;
+        let isMerged = (compra.extra === lastExtra && compra.valorPago === lastValorPago);
 
-  // For each item in this compra:
-  for (let itemIndex = 0; itemIndex < compra.itens.length; itemIndex++) {
-    const item = compra.itens[itemIndex];
-    const row = document.createElement("tr");
-    
-    // Group-level cells: show only once per group.
-    if (firstGroupRow) {
-      const nomeCell = document.createElement("td");
-      nomeCell.textContent = group.nome;
-      nomeCell.rowSpan = totalGroupRows;
-      row.appendChild(nomeCell);
+        for (let itemIndex = 0; itemIndex < compra.itens.length; itemIndex++) {
+          const item = compra.itens[itemIndex];
+          const row = document.createElement("tr");
 
-      const valorTotalCell = document.createElement("td");
-      valorTotalCell.textContent = formatNumber(group.valorTotal);
-      valorTotalCell.rowSpan = totalGroupRows;
-      row.appendChild(valorTotalCell);
-      firstGroupRow = false;
-    }
-    
-    // Dia-level cell: show only once per day.
-    if (firstDayRow && itemIndex === 0 && compraIndex === 0) {
-      const dataCell = document.createElement("td");
-      dataCell.textContent = dia.data;
-      dataCell.rowSpan = totalDayRows;
-      dataCell.style.whiteSpace = "nowrap";
-      row.appendChild(dataCell);
-      firstDayRow = false;
-    }
-    
-    // Compra-level cells: render extra and valorPago only if not merging.
-    if (!isMerged && itemIndex === 0) {
-      // New extra group – create new cells.
-      const extraCell = document.createElement("td");
-      extraCell.textContent = compra.extra;
-      extraCell.rowSpan = totalCompraRows;  // initial row span for this compra group.
-      row.appendChild(extraCell);
-      lastExtraCell = extraCell;  // keep a reference to update later
-      
-      const valorPagoCell = document.createElement("td");
-      valorPagoCell.textContent = formatNumber(compra.valorPago);
-      valorPagoCell.rowSpan = totalCompraRows;
-      row.appendChild(valorPagoCell);
-      lastValorPagoCell = valorPagoCell;
-      
-      // Store the current values for later comparison.
-      lastExtra = compra.extra;
-      lastValorPago = compra.valorPago;
-    } else if (isMerged && itemIndex === 0) {
-      // Same as previous compra – do not render new cells,
-      // but update the rowSpan on the already rendered extra/valorPago cells.
-      lastExtraCell.rowSpan = parseInt(lastExtraCell.rowSpan) + totalCompraRows;
-      lastValorPagoCell.rowSpan = parseInt(lastValorPagoCell.rowSpan) + totalCompraRows;
-      // Do nothing else for compra-level cells in this row.
-    }
-    
-    // Render the item-level cells.
-    const descricaoCell = document.createElement("td");
-    descricaoCell.textContent = item.descricao;
-    row.appendChild(descricaoCell);
-    
-    const quantidadeCell = document.createElement("td");
-    quantidadeCell.textContent = item.quantidade;
-    row.appendChild(quantidadeCell);
-    
-    const descontoCell = document.createElement("td");
-    descontoCell.textContent = item.desconto;
-    row.appendChild(descontoCell);
-    
-    const valorOriginalCell = document.createElement("td");
-    valorOriginalCell.textContent = formatNumber(item.valorOriginal);
-    row.appendChild(valorOriginalCell);
-    
-    tbody.appendChild(row);
-  }
-}
+          if (firstGroupRow) {
+            const nomeCell = document.createElement("td");
+            nomeCell.textContent = group.nome;
+            nomeCell.rowSpan = totalGroupRows;
+            row.appendChild(nomeCell);
+
+            const valorTotalCell = document.createElement("td");
+            valorTotalCell.textContent = formatNumber(group.valorTotal);
+            valorTotalCell.rowSpan = totalGroupRows;
+            row.appendChild(valorTotalCell);
+            firstGroupRow = false;
+          }
+
+          if (firstDayRow && itemIndex === 0 && compraIndex === 0) {
+            const dataCell = document.createElement("td");
+            dataCell.textContent = dia.data;
+            dataCell.rowSpan = totalDayRows;
+            dataCell.style.whiteSpace = "nowrap";
+            row.appendChild(dataCell);
+            firstDayRow = false;
+          }
+
+          if (!isMerged && itemIndex === 0) {
+            const extraCell = document.createElement("td");
+            extraCell.textContent = compra.extra;
+            extraCell.rowSpan = totalCompraRows;
+            extraCell.className = "hidden";  // HIDE THIS COLUMN
+            row.appendChild(extraCell);
+            lastExtraCell = extraCell;
+
+            const valorPagoCell = document.createElement("td");
+            valorPagoCell.textContent = formatNumber(compra.valorPago);
+            valorPagoCell.rowSpan = totalCompraRows;
+            row.appendChild(valorPagoCell);
+            lastValorPagoCell = valorPagoCell;
+
+            lastExtra = compra.extra;
+            lastValorPago = compra.valorPago;
+          } else if (isMerged && itemIndex === 0) {
+            lastExtraCell.rowSpan = parseInt(lastExtraCell.rowSpan) + totalCompraRows;
+            lastValorPagoCell.rowSpan = parseInt(lastValorPagoCell.rowSpan) + totalCompraRows;
+          }
+
+          const descricaoCell = document.createElement("td");
+          descricaoCell.textContent = item.descricao;
+          row.appendChild(descricaoCell);
+
+          const quantidadeCell = document.createElement("td");
+          quantidadeCell.textContent = item.quantidade;
+          row.appendChild(quantidadeCell);
+
+          const descontoCell = document.createElement("td");
+          descontoCell.textContent = item.desconto;
+          row.appendChild(descontoCell);
+
+          const valorOriginalCell = document.createElement("td");
+          valorOriginalCell.textContent = formatNumber(item.valorOriginal);
+          row.appendChild(valorOriginalCell);
+
+          tbody.appendChild(row);
+        }
+      }
     });
   });
 
