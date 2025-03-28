@@ -276,6 +276,18 @@ function renderAuxRelatorioTable(data) {
     return;
   }
 
+  // Sort the data groups:
+  // - First, descending by 'valorTotal' (assumed to be numeric or convertible to number)
+  // - If 'valorTotal' is equal, sort alphabetically by 'nome'
+  data.data.sort((a, b) => {
+    const valorA = parseFloat(a.valorTotal) || 0;
+    const valorB = parseFloat(b.valorTotal) || 0;
+    if (valorB !== valorA) {
+      return valorB - valorA;
+    }
+    return a.nome.localeCompare(b.nome);
+  });
+
   const collapsible = document.createElement("div");
   collapsible.className = "collapsible";
 
