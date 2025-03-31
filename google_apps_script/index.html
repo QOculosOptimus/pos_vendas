@@ -379,14 +379,15 @@ function renderAuxRelatorioTable(data) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  // Updated headers: added "Telefone" after "Nome" and before "Celular"
+  // Updated headers: now include "Vendedor" after "Extra" and before "Valor Pago"
   const headers = [
     "Nome",
-    "Telefone",  // New column added here
+    "Telefone",  
     "Celular",
     "Valor Total Nome",
     "Data",
     "Extra",
+    "Vendedor",   // New column added here
     "Valor Pago",
     "Descrição",
     "Quantidade",
@@ -397,6 +398,7 @@ function renderAuxRelatorioTable(data) {
   headers.forEach((text) => {
     const th = document.createElement("th");
     th.textContent = text;
+    // Hide the Extra column header if needed
     if (text === "Extra") {
       th.className = "hidden";
     }
@@ -427,6 +429,7 @@ function renderAuxRelatorioTable(data) {
       let lastExtra = null;
       let lastValorPago = null;
       let lastExtraCell = null;
+      let lastVendedorCell = null;  // New: keep track of vendedor cell
       let lastValorPagoCell = null;
 
       for (let compraIndex = 0; compraIndex < dia.compras.length; compraIndex++) {
@@ -445,7 +448,7 @@ function renderAuxRelatorioTable(data) {
             nomeCell.rowSpan = totalGroupRows;
             row.appendChild(nomeCell);
 
-            // Telefone cell (new column)
+            // Telefone cell
             const telefoneCell = document.createElement("td");
             telefoneCell.textContent = group.telefone;
             telefoneCell.rowSpan = totalGroupRows;
@@ -476,13 +479,22 @@ function renderAuxRelatorioTable(data) {
           }
 
           if (!isMerged && itemIndex === 0) {
+            // Extra cell (hidden)
             const extraCell = document.createElement("td");
             extraCell.textContent = compra.extra;
             extraCell.rowSpan = totalCompraRows;
-            extraCell.className = "hidden";  // still hidden
+            extraCell.className = "hidden";
             row.appendChild(extraCell);
             lastExtraCell = extraCell;
 
+            // New: Vendedor cell inserted between Extra and Valor Pago
+            const vendedorCell = document.createElement("td");
+            vendedorCell.textContent = group.vendedor;
+            vendedorCell.rowSpan = totalCompraRows;
+            row.appendChild(vendedorCell);
+            lastVendedorCell = vendedorCell;
+
+            // Valor Pago cell
             const valorPagoCell = document.createElement("td");
             valorPagoCell.textContent = formatNumber(compra.valorPago);
             valorPagoCell.rowSpan = totalCompraRows;
@@ -492,10 +504,13 @@ function renderAuxRelatorioTable(data) {
             lastExtra = compra.extra;
             lastValorPago = compra.valorPago;
           } else if (isMerged && itemIndex === 0) {
+            // Increase rowSpan for merged cells (Extra, Vendedor, and Valor Pago)
             lastExtraCell.rowSpan = parseInt(lastExtraCell.rowSpan) + totalCompraRows;
+            lastVendedorCell.rowSpan = parseInt(lastVendedorCell.rowSpan) + totalCompraRows;
             lastValorPagoCell.rowSpan = parseInt(lastValorPagoCell.rowSpan) + totalCompraRows;
           }
 
+          // Other cells: Descrição, Quantidade, Desconto, Valor Original
           const descricaoCell = document.createElement("td");
           descricaoCell.textContent = item.descricao;
           row.appendChild(descricaoCell);

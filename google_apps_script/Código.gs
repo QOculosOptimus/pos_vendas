@@ -572,7 +572,8 @@ function fetchAuxRelatorio() {
     // Use the value from Column K (index 10) for valorPago
     const valorPago = parseFloat(row[10]) || 0;
 
-    // Initialize group if needed, including celular from Column R (index 17) and telefone from Column Q (index 16)
+    // Initialize group if needed, including celular from Column R (index 17), telefone from Column Q (index 16)
+    // and vendedor from Column U (index 20)
     if (!groups[nome]) {
       groups[nome] = {
         nome: nome,
@@ -580,7 +581,8 @@ function fetchAuxRelatorio() {
         dias: [],
         extrasSet: {},
         celular: row[17],   // Already added celular information
-        telefone: row[16]   // Added telefone information from Column Q (index 16)
+        telefone: row[16],  // Added telefone information from Column Q (index 16)
+        vendedor: row[20]   // New: vendedor information from Column U (index 20)
       };
     }
     
