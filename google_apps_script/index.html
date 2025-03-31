@@ -254,8 +254,9 @@
 
 
 // Helper function to append messages with icons
-    function appendMessage(msg, iconClass) {
-      var container = document.getElementById("messages");
+    // make appendMessage have an optional messageBox parameter that has a default value of "messages"
+    function appendMessage(msg, iconClass, messageBox = "messages") {
+      var container = document.getElementById(messageBox);
       if (container) {
         var p = document.createElement("p");
         var icon = document.createElement("i");
@@ -270,8 +271,9 @@
     }
 
     // Helper function to clear previous messages
-    function clearMessages() {
-      var container = document.getElementById("messages");
+    // make clearMessages have an optional messageBox parameter that has a default value of "messages"
+    function clearMessages(messageBox = "messages") {
+      var container = document.getElementById(messageBox);
       if (container) {
         container.innerHTML = "";
       }
@@ -546,10 +548,15 @@ function renderAuxRelatorioTable(data) {
 
   // New function to call the server-side function and render the table
   function fetchAuxRelatorioData() {
+  document.getElementById("relatorioButton").disabled = true;
+  clearMessages("messages_relatorio");
+  appendMessage("Criando tabela...", "fas fa-spinner fa-spin", "messages_relatorio");
   google.script.run
     .withSuccessHandler(function(response) {
       console.log("Response received:", response);
       renderAuxRelatorioTable(response);
+      clearMessages("messages_relatorio");
+      document.getElementById("relatorioButton").disabled = false;
     })
     .withFailureHandler(function(error) {
       console.error("Error:", error);
@@ -567,13 +574,14 @@ function renderAuxRelatorioTable(data) {
 <body>
   <!-- Existing content -->
   <button id="fetchButton" onclick="fetchSalesItemsAndContacts()">
-	  Buscar Vendas + Contatos + Itens
+	  <i class="fa-solid fa-download"></i> Atualizar dados de Buscar Vendas + Contatos + Itens
   </button>
   <div id="messages"></div>
   <div id="response"></div>
   
   <!-- NEW: Button and container for Aux Relatório -->
-  <button onclick="fetchAuxRelatorioData()">Buscar Aux Relatório</button>
+  <button id="relatorioButton" onclick="fetchAuxRelatorioData()"><i class="fa-solid fa-table"></i> Montar tabela</button>
+  <div id="messages_relatorio"></div>
   <div id="auxRelatorioResponse"></div>
 </body>
 </html>
