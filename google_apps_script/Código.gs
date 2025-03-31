@@ -279,7 +279,8 @@ function fetchItemsOrders() {
             "Produto ID",
             "Comissão Base",
             "Comissão Aliquota",
-            "Comissão Valor"
+            "Comissão Valor",
+	    "Vendedor ID"
         ];
         vendasItensSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         lastRow = 1;
@@ -326,7 +327,8 @@ function fetchItemsOrders() {
                     item.produto.id,            // Produto ID
                     item.comissao.base,         // Comissão Base
                     item.comissao.aliquota,     // Comissão Aliquota
-                    item.comissao.valor         // Comissão Valor
+                    item.comissao.valor,         // Comissão Valor
+		    orderData.vendedor.id       // Vendedor ID
                 ];
 
                 dataRows.push(dataRow);

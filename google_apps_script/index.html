@@ -263,7 +263,7 @@
 	          // Finally, fetch items orders
 	          google.script.run.withSuccessHandler(function() {
 	            // Optionally show a final message in the UI
-	            Logger.log("Vendas, contatos and itens atualizados!");
+	            console.log("Vendas, contatos and itens atualizados!");
 	          }).fetchItemsOrders();
 	        }).fetchContacts();
 	      }).fetchSalesOrders();
