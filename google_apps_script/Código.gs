@@ -570,14 +570,15 @@ function fetchAuxRelatorio() {
     // Use the value from Column K (index 10) for valorPago
     const valorPago = parseFloat(row[10]) || 0;
 
-    // Initialize group if needed, including celular from Column R (index 17)
+    // Initialize group if needed, including celular from Column R (index 17) and telefone from Column Q (index 16)
     if (!groups[nome]) {
       groups[nome] = {
         nome: nome,
         valorTotal: 0,
         dias: [],
         extrasSet: {},
-        celular: row[17]  // Added celular information
+        celular: row[17],   // Already added celular information
+        telefone: row[16]   // Added telefone information from Column Q (index 16)
       };
     }
     

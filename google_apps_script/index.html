@@ -271,6 +271,7 @@
 	  }).checkTokenExpiration();
 	}
 
+
 function formatNumber(value) {
   const number = parseFloat(value) || 0;
   return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -324,9 +325,11 @@ function renderAuxRelatorioTable(data) {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
+  // Updated headers: added "Telefone" after "Nome" and before "Celular"
   const headers = [
     "Nome",
-    "Celular", // Added column
+    "Telefone",  // New column added here
+    "Celular",
     "Valor Total Nome",
     "Data",
     "Extra",
@@ -382,16 +385,25 @@ function renderAuxRelatorioTable(data) {
           const row = document.createElement("tr");
 
           if (firstGroupRow) {
+            // Nome cell
             const nomeCell = document.createElement("td");
             nomeCell.textContent = group.nome;
             nomeCell.rowSpan = totalGroupRows;
             row.appendChild(nomeCell);
 
+            // Telefone cell (new column)
+            const telefoneCell = document.createElement("td");
+            telefoneCell.textContent = group.telefone;
+            telefoneCell.rowSpan = totalGroupRows;
+            row.appendChild(telefoneCell);
+
+            // Celular cell
             const celularCell = document.createElement("td");
             celularCell.textContent = group.celular;
             celularCell.rowSpan = totalGroupRows;
             row.appendChild(celularCell);
 
+            // Valor Total cell
             const valorTotalCell = document.createElement("td");
             valorTotalCell.textContent = formatNumber(group.valorTotal);
             valorTotalCell.rowSpan = totalGroupRows;
