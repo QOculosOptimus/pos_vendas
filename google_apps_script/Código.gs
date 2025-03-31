@@ -572,17 +572,15 @@ function fetchAuxRelatorio() {
     // Use the value from Column K (index 10) for valorPago
     const valorPago = parseFloat(row[10]) || 0;
 
-    // Initialize group if needed, including celular from Column R (index 17), telefone from Column Q (index 16)
-    // and vendedor from Column U (index 20)
+    // Initialize group if needed, including celular from Column R (index 17) and telefone from Column Q (index 16)
     if (!groups[nome]) {
       groups[nome] = {
         nome: nome,
         valorTotal: 0,
         dias: [],
         extrasSet: {},
-        celular: row[17],   // Already added celular information
-        telefone: row[16],  // Added telefone information from Column Q (index 16)
-        vendedor: row[20]   // New: vendedor information from Column U (index 20)
+        celular: row[17],
+        telefone: row[16]
       };
     }
     
@@ -598,10 +596,11 @@ function fetchAuxRelatorio() {
       dataValue = Utilities.formatDate(dataValue, Session.getScriptTimeZone(), "yyyy-MM-dd");
     }
 
-    // Create a new compra object from this row.
+    // Create a new compra object including vendedor from Column U (index 20)
     const compra = {
       extra: extraValue,
       valorPago: valorPago,
+      vendedor: row[20],  // New: vendedor information
       itens: [{
         descricao: row[12],      // Column M (index 12)
         quantidade: row[7],      // Column H (index 7)
