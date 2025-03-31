@@ -261,15 +261,16 @@
         }
 
 
-// Helper function to append messages with icons
-    // make appendMessage have an optional messageBox parameter that has a default value of "messages"
-    function appendMessage(msg, iconClass, messageBox = "messages") {
+    function appendMessage(msg, iconClass, color = "", messageBox = "messages") {
       var container = document.getElementById(messageBox);
       if (container) {
         var p = document.createElement("p");
         var icon = document.createElement("i");
         icon.className = iconClass;
         icon.style.marginRight = "8px";
+	if (color) {
+	  icon.style.color = color;
+	}
         p.appendChild(icon);
         var span = document.createElement("span");
         span.textContent = msg;
@@ -294,13 +295,14 @@
       clearMessages();
 
       // Show the token check message with a spinning icon
-      appendMessage("Checando Token", "fas fa-spinner fa-spin");
+      appendMessage("Checando Token", "fas fa-spinner fa-spin", "orange");
 
       // Check if the token is expired
       google.script.run.withSuccessHandler(function(isTokenExpired) {
         if (isTokenExpired) {
           // If expired, prompt for password with a key icon
-          appendMessage("Digitar senha", "fas fa-key");
+	  clearMessages();
+          appendMessage("Digitar senha", "fas fa-key", "orange");
           google.script.run.withSuccessHandler(function(url) {
             window.open(url, '_blank');
             // Re-enable the button after redirect
@@ -308,24 +310,32 @@
           }).getRedirectUrl();
         } else {
           // If token is valid, indicate success with a check-circle icon
-          appendMessage("Token ok!", "fas fa-check-circle");
+	  clearMessages();
+          appendMessage("Token ok!", "fas fa-check-circle", "green");
 
           // Updating table Vendas
-          appendMessage("Atualizando tabela Vendas", "fas fa-sync-alt");
+	  clearMessages();
+          appendMessage("Atualizando tabela Vendas", "fas fa-spinner fa-spin", "orange");
           google.script.run.withSuccessHandler(function() {
-            appendMessage("Tabela Vendas atualizada", "fas fa-check-square");
+	    clearMessages();
+            appendMessage("Tabela Vendas atualizada", "fas fa-check-square", "green");
 
             // Updating table Contatos
-            appendMessage("Atualizando tabela Contatos", "fas fa-sync-alt");
+	    clearMessages();
+            appendMessage("Atualizando tabela Contatos", "fas fa-spinner fa-spin", "orange");
             google.script.run.withSuccessHandler(function() {
-              appendMessage("Tabela Contatos atualizada", "fas fa-check-square");
+	      clearMessages();
+              appendMessage("Tabela Contatos atualizada", "fas fa-check-square", "green");
 
               // Updating table Itens
-              appendMessage("Atualizando tabela Itens", "fas fa-sync-alt");
+	      clearMessages();
+              appendMessage("Atualizando tabela Itens", "fas fa-spinner fa-spin", "orange");
               google.script.run.withSuccessHandler(function() {
-                appendMessage("Tabela Itens atualizada", "fas fa-check-square");
+	        clearMessages();
+                appendMessage("Tabela Itens atualizada", "fas fa-check-square", "green");
                 // Final success message with a thumbs-up icon
-                appendMessage("Vendas, contatos and itens atualizados!", "fas fa-thumbs-up");
+	        clearMessages();
+                appendMessage("Vendas, contatos and itens atualizados!", "fas fa-thumbs-up", "blue");
                 // Re-enable the button after all updates
                 document.getElementById("fetchButton").disabled = false;
               }).fetchItemsOrders();
@@ -386,7 +396,8 @@ function renderAuxRelatorioTable(data) {
 
   // Create a download button that appears above the table
   const downloadButton = document.createElement("button");
-  downloadButton.textContent = "Download as Excel";
+  // put <i class="fa-solid fa-table" style="color: green;"></i> before the text
+  downloadButton.innerHTML = '<i class="fa-solid fa-table" style="color: green;"></i> Baixar como tabela do Excel (.xlsx)';
   downloadButton.onclick = exportTableToExcel;
   content.appendChild(downloadButton);
 
@@ -558,10 +569,9 @@ function renderAuxRelatorioTable(data) {
   function fetchAuxRelatorioData() {
   document.getElementById("relatorioButton").disabled = true;
   clearMessages("messages_relatorio");
-  appendMessage("Criando tabela...", "fas fa-spinner fa-spin", "messages_relatorio");
+  appendMessage("Criando tabela...", "fas fa-spinner fa-spin", "blue", "messages_relatorio");
   google.script.run
     .withSuccessHandler(function(response) {
-      console.log("Response received:", response);
       renderAuxRelatorioTable(response);
       clearMessages("messages_relatorio");
       document.getElementById("relatorioButton").disabled = false;
@@ -583,7 +593,7 @@ function renderAuxRelatorioTable(data) {
   <div class="container">
     <div class="left">
       <button id="fetchButton" onclick="fetchSalesItemsAndContacts()">
-        <i class="fa-solid fa-download"></i> Atualizar dados de Buscar Vendas + Contatos + Itens
+        <i class="fa-solid fa-download" style="color: blue;"></i> Atualizar dados de Buscar Vendas + Contatos + Itens
       </button>
       <div id="messages"></div>
       <div id="response"></div>
@@ -591,7 +601,7 @@ function renderAuxRelatorioTable(data) {
   
     <div class="right">
       <button id="relatorioButton" onclick="fetchAuxRelatorioData()">
-        <i class="fa-solid fa-table"></i> Montar tabela
+        <i class="fa-solid fa-table" style="color: green;"></i> Montar tabela
       </button>
       <div id="messages_relatorio"></div>
     </div>
