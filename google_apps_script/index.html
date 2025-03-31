@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Buscar Vendas e Produtos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
     <style>
+         /* Optional: style the messages container */
+         #messages p {
+           margin: 4px 0;
+           font-family: Arial, sans-serif;
+           font-size: 14px;
+         }
         /* Styles */
         table {
             width: 100%;
@@ -245,71 +252,79 @@
             });
         }
 
-function appendMessage(msg) {
-  var container = document.getElementById("messages");
-  if (container) {
-    var p = document.createElement("p");
-    p.textContent = msg;
-    container.appendChild(p);
-  }
-}
 
-// Helper function to clear messages from the container
-function clearMessages() {
-  var container = document.getElementById("messages");
-  if (container) {
-    container.innerHTML = "";
-  }
-}
-
-function fetchSalesItemsAndContacts() {
-  // Disable the button while processing
-  document.getElementById("fetchButton").disabled = true;
-  
-  // Clear previous messages
-  clearMessages();
-
-  // Show initial token check message
-  appendMessage("Checando Token");
-  
-  // Check if the token is expired
-  google.script.run.withSuccessHandler(function(isTokenExpired) {
-    if (isTokenExpired) {
-      // If expired, prompt for password
-      appendMessage("Digitar senha");
-      google.script.run.withSuccessHandler(function(url) {
-        window.open(url, '_blank');
-        // Re-enable the button after redirect is initiated
-        document.getElementById("fetchButton").disabled = false;
-      }).getRedirectUrl();
-    } else {
-      // If token is valid, indicate success and update tables
-      appendMessage("Token ok!");
-      
-      // Updating table Vendas
-      appendMessage("Atualizando tabela Vendas");
-      google.script.run.withSuccessHandler(function() {
-        appendMessage("Tabela Vendas atualizada");
-        
-        // Updating table Contatos
-        appendMessage("Atualizando tabela Contatos");
-        google.script.run.withSuccessHandler(function() {
-          appendMessage("Tabela Contatos atualizada");
-          
-          // Updating table Itens
-          appendMessage("Atualizando tabela Itens");
-          google.script.run.withSuccessHandler(function() {
-            appendMessage("Tabela Itens atualizada");
-            // Optionally, final message
-            appendMessage("Vendas, contatos and itens atualizados!");
-            // Re-enable the button after all updates are complete
-            document.getElementById("fetchButton").disabled = false;
-          }).fetchItemsOrders();
-        }).fetchContacts();
-      }).fetchSalesOrders();
+// Helper function to append messages with icons
+    function appendMessage(msg, iconClass) {
+      var container = document.getElementById("messages");
+      if (container) {
+        var p = document.createElement("p");
+        var icon = document.createElement("i");
+        icon.className = iconClass;
+        icon.style.marginRight = "8px";
+        p.appendChild(icon);
+        var span = document.createElement("span");
+        span.textContent = msg;
+        p.appendChild(span);
+        container.appendChild(p);
+      }
     }
-  }).checkTokenExpiration();
-}
+
+    // Helper function to clear previous messages
+    function clearMessages() {
+      var container = document.getElementById("messages");
+      if (container) {
+        container.innerHTML = "";
+      }
+    }
+
+    function fetchSalesItemsAndContacts() {
+      // Disable the button while processing
+      document.getElementById("fetchButton").disabled = true;
+      // Clear previous messages
+      clearMessages();
+
+      // Show the token check message with a spinning icon
+      appendMessage("Checando Token", "fas fa-spinner fa-spin");
+
+      // Check if the token is expired
+      google.script.run.withSuccessHandler(function(isTokenExpired) {
+        if (isTokenExpired) {
+          // If expired, prompt for password with a key icon
+          appendMessage("Digitar senha", "fas fa-key");
+          google.script.run.withSuccessHandler(function(url) {
+            window.open(url, '_blank');
+            // Re-enable the button after redirect
+            document.getElementById("fetchButton").disabled = false;
+          }).getRedirectUrl();
+        } else {
+          // If token is valid, indicate success with a check-circle icon
+          appendMessage("Token ok!", "fas fa-check-circle");
+
+          // Updating table Vendas
+          appendMessage("Atualizando tabela Vendas", "fas fa-sync-alt");
+          google.script.run.withSuccessHandler(function() {
+            appendMessage("Tabela Vendas atualizada", "fas fa-check-square");
+
+            // Updating table Contatos
+            appendMessage("Atualizando tabela Contatos", "fas fa-sync-alt");
+            google.script.run.withSuccessHandler(function() {
+              appendMessage("Tabela Contatos atualizada", "fas fa-check-square");
+
+              // Updating table Itens
+              appendMessage("Atualizando tabela Itens", "fas fa-sync-alt");
+              google.script.run.withSuccessHandler(function() {
+                appendMessage("Tabela Itens atualizada", "fas fa-check-square");
+                // Final success message with a thumbs-up icon
+                appendMessage("Vendas, contatos and itens atualizados!", "fas fa-thumbs-up");
+                // Re-enable the button after all updates
+                document.getElementById("fetchButton").disabled = false;
+              }).fetchItemsOrders();
+            }).fetchContacts();
+          }).fetchSalesOrders();
+        }
+      }).checkTokenExpiration();
+    }
+
 
 function formatNumber(value) {
   const number = parseFloat(value) || 0;
