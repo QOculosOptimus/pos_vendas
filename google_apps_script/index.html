@@ -245,32 +245,71 @@
             });
         }
 
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // NEW FUNCTION: Combines "fetchSalesOrders" then "fetchItemsOrders"
-        // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	function fetchSalesItemsAndContacts() {
-	  // First, check if the token is expired
-	  google.script.run.withSuccessHandler(function(isTokenExpired) {
-	    if (isTokenExpired) {
-	      google.script.run.withSuccessHandler(function(url) {
-	        window.open(url, '_blank');
-	      }).getRedirectUrl();
-	    } else {
-	      // First, fetch vendas
-	      google.script.run.withSuccessHandler(function() {
-	        // Then, fetch contacts using the new API call
-	        google.script.run.withSuccessHandler(function() {
-	          // Finally, fetch items orders
-	          google.script.run.withSuccessHandler(function() {
-	            // Optionally show a final message in the UI
-	            console.log("Vendas, contatos and itens atualizados!");
-	          }).fetchItemsOrders();
-	        }).fetchContacts();
-	      }).fetchSalesOrders();
-	    }
-	  }).checkTokenExpiration();
-	}
+function appendMessage(msg) {
+  var container = document.getElementById("messages");
+  if (container) {
+    var p = document.createElement("p");
+    p.textContent = msg;
+    container.appendChild(p);
+  }
+}
 
+// Helper function to clear messages from the container
+function clearMessages() {
+  var container = document.getElementById("messages");
+  if (container) {
+    container.innerHTML = "";
+  }
+}
+
+function fetchSalesItemsAndContacts() {
+  // Disable the button while processing
+  document.getElementById("fetchButton").disabled = true;
+  
+  // Clear previous messages
+  clearMessages();
+
+  // Show initial token check message
+  appendMessage("Checando Token");
+  
+  // Check if the token is expired
+  google.script.run.withSuccessHandler(function(isTokenExpired) {
+    if (isTokenExpired) {
+      // If expired, prompt for password
+      appendMessage("Digitar senha");
+      google.script.run.withSuccessHandler(function(url) {
+        window.open(url, '_blank');
+        // Re-enable the button after redirect is initiated
+        document.getElementById("fetchButton").disabled = false;
+      }).getRedirectUrl();
+    } else {
+      // If token is valid, indicate success and update tables
+      appendMessage("Token ok!");
+      
+      // Updating table Vendas
+      appendMessage("Atualizando tabela Vendas");
+      google.script.run.withSuccessHandler(function() {
+        appendMessage("Tabela Vendas atualizada");
+        
+        // Updating table Contatos
+        appendMessage("Atualizando tabela Contatos");
+        google.script.run.withSuccessHandler(function() {
+          appendMessage("Tabela Contatos atualizada");
+          
+          // Updating table Itens
+          appendMessage("Atualizando tabela Itens");
+          google.script.run.withSuccessHandler(function() {
+            appendMessage("Tabela Itens atualizada");
+            // Optionally, final message
+            appendMessage("Vendas, contatos and itens atualizados!");
+            // Re-enable the button after all updates are complete
+            document.getElementById("fetchButton").disabled = false;
+          }).fetchItemsOrders();
+        }).fetchContacts();
+      }).fetchSalesOrders();
+    }
+  }).checkTokenExpiration();
+}
 
 function formatNumber(value) {
   const number = parseFloat(value) || 0;
@@ -491,7 +530,10 @@ function renderAuxRelatorioTable(data) {
 </head>
 <body>
   <!-- Existing content -->
-  <button onclick="fetchSalesItemsAndContacts()">Buscar Vendas + Contatos + Itens</button>
+  <button id="fetchButton" onclick="fetchSalesItemsAndContacts()">
+	  Buscar Vendas + Contatos + Itens
+  </button>
+  <div id="messages"></div>
   <div id="response"></div>
   
   <!-- NEW: Button and container for Aux Relatório -->
