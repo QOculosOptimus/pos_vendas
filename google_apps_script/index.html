@@ -320,6 +320,8 @@ function renderAuxRelatorioTable(data) {
   });
 
   const table = document.createElement("table");
+  // give id "myTable" to the table
+  table.id = "myTable";
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
@@ -477,7 +479,13 @@ function renderAuxRelatorioTable(data) {
     })
     .fetchAuxRelatorio();
 }
+  function exportTableToExcel() {
+  const table = document.getElementById('myTable');
+  const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
+  XLSX.writeFile(wb, 'table_export.xlsx');
+}
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <!-- Existing content -->
@@ -486,6 +494,7 @@ function renderAuxRelatorioTable(data) {
   
   <!-- NEW: Button and container for Aux Relatório -->
   <button onclick="fetchAuxRelatorioData()">Buscar Aux Relatório</button>
+  <button onclick="exportTableToExcel()">Download as Excel</button>
   <div id="auxRelatorioResponse"></div>
 </body>
 </html>
