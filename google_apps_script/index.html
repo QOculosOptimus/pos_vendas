@@ -374,6 +374,12 @@ function renderAuxRelatorioTable(data) {
     toggleIcon.innerHTML = collapsible.classList.contains("active") ? "&#9660;" : "&#9654;";
   });
 
+  // Create a download button that appears above the table
+  const downloadButton = document.createElement("button");
+  downloadButton.textContent = "Download as Excel";
+  downloadButton.onclick = exportTableToExcel;
+  content.appendChild(downloadButton);
+
   const table = document.createElement("table");
   table.id = "myTable";
   const thead = document.createElement("thead");
@@ -568,7 +574,6 @@ function renderAuxRelatorioTable(data) {
   
   <!-- NEW: Button and container for Aux Relatório -->
   <button onclick="fetchAuxRelatorioData()">Buscar Aux Relatório</button>
-  <button onclick="exportTableToExcel()">Download as Excel</button>
   <div id="auxRelatorioResponse"></div>
 </body>
 </html>
