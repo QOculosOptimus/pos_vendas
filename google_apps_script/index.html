@@ -320,13 +320,13 @@ function renderAuxRelatorioTable(data) {
   });
 
   const table = document.createElement("table");
-  // give id "myTable" to the table
   table.id = "myTable";
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
   const headers = [
     "Nome",
+    "Celular", // Added column
     "Valor Total Nome",
     "Data",
     "Extra",
@@ -385,29 +385,18 @@ function renderAuxRelatorioTable(data) {
             const nomeCell = document.createElement("td");
             nomeCell.textContent = group.nome;
             nomeCell.rowSpan = totalGroupRows;
-            nomeCell.style.cursor = "pointer";
-            // When the nome cell is clicked, display the celular info temporarily.
-            nomeCell.addEventListener("click", function(e) {
-              const tooltip = document.createElement("div");
-              tooltip.textContent = "Celular: " + group.celular;
-              tooltip.style.position = "absolute";
-              tooltip.style.backgroundColor = "#f9f9f9";
-              tooltip.style.border = "1px solid #ccc";
-              tooltip.style.padding = "5px";
-              tooltip.style.zIndex = 1000;
-              tooltip.style.left = e.pageX + "px";
-              tooltip.style.top = e.pageY + "px";
-              document.body.appendChild(tooltip);
-              setTimeout(function() {
-                tooltip.remove();
-              }, 2000); // Remove after 2 seconds
-            });
             row.appendChild(nomeCell);
+
+            const celularCell = document.createElement("td");
+            celularCell.textContent = group.celular;
+            celularCell.rowSpan = totalGroupRows;
+            row.appendChild(celularCell);
 
             const valorTotalCell = document.createElement("td");
             valorTotalCell.textContent = formatNumber(group.valorTotal);
             valorTotalCell.rowSpan = totalGroupRows;
             row.appendChild(valorTotalCell);
+
             firstGroupRow = false;
           }
 
@@ -424,7 +413,7 @@ function renderAuxRelatorioTable(data) {
             const extraCell = document.createElement("td");
             extraCell.textContent = compra.extra;
             extraCell.rowSpan = totalCompraRows;
-            extraCell.className = "hidden";  // HIDE THIS COLUMN
+            extraCell.className = "hidden";  // still hidden
             row.appendChild(extraCell);
             lastExtraCell = extraCell;
 
@@ -466,6 +455,7 @@ function renderAuxRelatorioTable(data) {
   table.appendChild(tbody);
   content.appendChild(table);
 }
+
 
   // New function to call the server-side function and render the table
   function fetchAuxRelatorioData() {
