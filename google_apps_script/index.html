@@ -589,6 +589,47 @@ function renderAuxRelatorioTable(data) {
 }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      function downloadAuxRelatorioXlsx() {
+        google.script.run
+	              .withFailureHandler(function(err) {
+              console.error("Server call error:", err);
+              alert("Error: " + err.message);
+          })
+		      .withSuccessHandler(function(data) {
+	  console.log("Data:", data);
+          if (!data || data.length === 0) {
+            alert('No data available to download.');
+            return;
+          }
+          
+          // Create a temporary HTML table element.
+          const tempTable = document.createElement("table");
+          // Populate the table row by row.
+          data.forEach((rowData, rowIndex) => {
+            const tr = document.createElement("tr");
+            rowData.forEach(cellData => {
+              // Use <th> for the first row (headers); otherwise, use <td>.
+              const cell = document.createElement(rowIndex === 0 ? "th" : "td");
+              cell.textContent = cellData;
+              tr.appendChild(cell);
+            });
+            tempTable.appendChild(tr);
+          });
+          // Hide the temporary table.
+          tempTable.style.display = "none";
+          document.body.appendChild(tempTable);
+          
+          // Use the XLSX library (already loaded via the CDN) to convert the table to a workbook.
+          const wb = XLSX.utils.table_to_book(tempTable, { sheet: "AuxRelatório Data" });
+          XLSX.writeFile(wb, 'AuxRelatorioData.xlsx');
+          
+          // Remove the temporary table from the DOM.
+          document.body.removeChild(tempTable);
+        }).getAuxRelatorioDataForDownload();
+      }
+    </script>
+
 </head>
 <body>
   <div class="container">
@@ -601,6 +642,9 @@ function renderAuxRelatorioTable(data) {
     </div>
   
     <div class="right">
+      <button id="downloadAuxButton" onclick="downloadAuxRelatorioXlsx()">
+        <i class="fa-solid fa-download" style="color: orange;"></i> Download AuxRelatório (F-U) as XLSX
+      </button>
       <button id="relatorioButton" onclick="fetchAuxRelatorioData()">
         <i class="fa-solid fa-table" style="color: green;"></i> Montar tabela
       </button>

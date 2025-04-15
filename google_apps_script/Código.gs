@@ -628,3 +628,20 @@ function fetchAuxRelatorio() {
   return { data: Object.values(groups) };
 }
 
+function getAuxRelatorioDataForDownload() {
+  const ss = SpreadsheetApp.openById(sheetId);
+  const sheet = ss.getSheetByName("AuxRelatório");
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 1) {
+    return [];
+  }
+  const data = sheet.getRange(1, 6, lastRow, 16).getValues();
+
+  // Convert any Date object to a formatted string.
+  const convertedData = data.map(row => row.map(cell => {
+    return cell instanceof Date ? Utilities.formatDate(cell, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss") : cell;
+  }));
+  
+  return convertedData;
+}
+
