@@ -639,7 +639,8 @@ function getAuxRelatorioDataForDownload() {
 
   // Convert any Date object to a formatted string.
   const convertedData = data.map(row => row.map(cell => {
-    return cell instanceof Date ? Utilities.formatDate(cell, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss") : cell;
+    // Consider the grenwich time zone for date formatting
+    return cell instanceof Date ? Utilities.formatDate(cell, Session.getScriptTimeZone(), "yyyy-MM-dd") : cell;
   }));
   
   return convertedData;

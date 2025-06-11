@@ -584,8 +584,35 @@ function renderAuxRelatorioTable(data) {
 }
   function exportTableToExcel() {
   const table = document.getElementById('myTable');
-  const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
-  XLSX.writeFile(wb, 'table_export.xlsx');
+  // 1) Build the workbook
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+  
+  // 2) Grab the worksheet
+  const ws = wb.Sheets["Sheet1"];
+  
+  // Helper to get the column letters
+  function getCol(addr) {
+    return addr.match(/^[A-Z]+/)[0];
+  }
+  
+  // 3) Iterate only column E and round its date‐serials
+  Object.keys(ws).forEach(addr => {
+    if (addr[0] === '!') return;         // skip sheet meta‐entries
+    if (getCol(addr) !== 'E') return;    // only 5th column
+  
+    const cell = ws[addr];
+  
+    // If it’s a numeric date‐serial (integer part = day, fractional = time)
+    if (cell.t === 'n') {
+      cell.v = Math.round(cell.v);
+      // And force a clean “date only” format
+      cell.z = "yyyy-mm-dd";
+    }
+  });
+  
+  // 4) Write out
+  XLSX.writeFile(wb, "table_export.xlsx");
+
 }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -620,9 +647,34 @@ function renderAuxRelatorioTable(data) {
           tempTable.style.display = "none";
           document.body.appendChild(tempTable);
           
-          // Use the XLSX library (already loaded via the CDN) to convert the table to a workbook.
+          // 1) Build the workbook
           const wb = XLSX.utils.table_to_book(tempTable, { sheet: "AuxRelatório Data" });
-          XLSX.writeFile(wb, 'AuxRelatorioData.xlsx');
+
+	  // 2) Grab the worksheet
+	  const ws = wb.Sheets["AuxRelatório Data"];
+	  
+	  // Helper to get the column letters
+	  function getCol(addr) {
+	    return addr.match(/^[A-Z]+/)[0];
+	  }
+	  
+	  // 3) Iterate only column E and round its date‐serials
+	  Object.keys(ws).forEach(addr => {
+	    if (addr[0] === '!') return;         // skip sheet meta‐entries
+	    if (getCol(addr) !== 'N') return;    // only 14th column
+	  
+	    const cell = ws[addr];
+	    
+	    // If it’s a numeric date‐serial (integer part = day, fractional = time)
+	    if (cell.t === 'n') {
+	      cell.v = Math.round(cell.v);
+	      // And force a clean “date only” format
+	      cell.z = "yyyy-mm-dd";
+	    }
+	  });
+	  
+	  // 4) Write out the workbook to a file.
+	  XLSX.writeFile(wb, "AuxRelatorioData.xlsx");
           
           // Remove the temporary table from the DOM.
           document.body.removeChild(tempTable);
