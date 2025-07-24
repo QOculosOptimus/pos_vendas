@@ -1,3 +1,6 @@
 venv/
 pedidos_vendas.db
 .env
+*.pyc
+_pycache__/
+db.sqlite3
